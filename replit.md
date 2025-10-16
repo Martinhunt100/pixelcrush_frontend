@@ -68,6 +68,13 @@ The project is configured to run on port 5000 to work properly in the Replit env
 - **FAQ Section**: Collapsible accordion for frequently asked questions
 
 ## Recent Changes
+- **October 16, 2025**: Homepage content updates
+  - Updated homepage to match original HTML design exactly
+  - Added all missing content sections (AI Boyfriend, chat/voice/image/video, AI relationships, subscription options, global support, user activities)
+  - Added h3 and link styling to content sections
+  - Fixed bottom navigation: changed "Gallery" to "Collection" and corrected Voice Call route to /video
+  - Homepage now displays complete content with all sections from original design
+
 - **October 16, 2025**: Built PixelCrush landing page
   - Created Header and BottomNav components
   - Implemented character carousel with auto-rotation
