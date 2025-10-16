@@ -144,14 +144,14 @@ export default function Homepage() {
           <span className="nav-label">Chat</span>
         </Link>
 
-        <Link href="/voice" className="nav-item">
+        <Link href="/video" className="nav-item">
           <img src="https://www.figma.com/api/mcp/asset/a67f4f29-9007-4f4c-9cb6-539cfd116dfb" alt="Voice Call" className="nav-icon" />
           <span className="nav-label">Voice Call</span>
         </Link>
 
         <Link href="/gallery" className="nav-item">
-          <img src="https://www.figma.com/api/mcp/asset/52ffa327-17fa-4d67-9183-9a6523dc9d70" alt="Gallery" className="nav-icon" />
-          <span className="nav-label">Gallery</span>
+          <img src="https://www.figma.com/api/mcp/asset/52ffa327-17fa-4d67-9183-9a6523dc9d70" alt="Collection" className="nav-icon" />
+          <span className="nav-label">Collection</span>
         </Link>
 
         <Link href="/account" className="nav-item">
