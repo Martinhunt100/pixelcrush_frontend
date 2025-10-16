@@ -373,12 +373,26 @@ export default function Homepage() {
           margin-bottom: 32px;
         }
 
+        .content-section h3 {
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 32px;
+          color: white;
+          margin-bottom: 32px;
+        }
+
         .content-section p {
           font-size: 14px;
           font-weight: 400;
           line-height: 20px;
           color: rgba(255,255,255,0.7);
           margin-bottom: 32px;
+        }
+
+        .content-section a {
+          color: rgba(255,255,255,0.7);
+          text-decoration: underline;
+          cursor: pointer;
         }
 
         .footer {
