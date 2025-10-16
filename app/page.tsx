@@ -97,6 +97,25 @@ export default function Homepage() {
           <p>No two moods are the same, and neither are PixelCrush AI's characters. With over 100 different characters to choose from, you're never stuck with one tone or type.</p>
 
           <p>Looking for romance? The AI Girlfriend experience has been crafted for meaningful, emotionally rich conversations. These characters are flirty, affectionate, and deeply attentive. They remember your stories, send you thoughtful messages, and even surprise you with custom photos or sweet voice notes that sound... well, human.</p>
+
+          <p>Prefer a masculine presence? Our AI Boyfriend characters offer confidence, support, humor, or even a bit of edge. Whether you're looking for the gentleman-next-door or the adventurous type, there's a character that speaks your language - literally and emotionally.</p>
+
+          <p>And just when you think you've met them all, there's always another unique soul waiting to connect. But how exactly do they connect? What makes these companions feel so alive, so responsive, so real? Let's break it down.</p>
+
+          <h2>You Set the Tone in Every Chat, Voice, Image and Video</h2>
+          <p>This isn't just texting with a robot. PixelCrush AI goes far beyond simple chat bubbles. Whether you're looking for words, voices, visuals, or full-on video, your companion responds across all mediums and always in a way that feels tailored to you.</p>
+
+          <h2>PixelCrush Helps You Build an AI Relationship That Grows With You</h2>
+          <p>Creating your own PixelCrush AI companion is where things really get personal. The "Create My AI Companion" builder puts the power of choice in your hands, starting from the ground up.</p>
+
+          <h2>Your Subscription Moves at Your Pace</h2>
+          <p>Whether you're just testing the waters or ready to go all in, we've designed subscription options that match your mood and pace.</p>
+
+          <h3>PixelCrush AI Offers Global Support with Localized Experience</h3>
+          <p>Support matters. That's why PixelCrush AI runs 24/7 customer service. While our response times may vary depending on time zones, rest assured—we're always here to help.</p>
+
+          <h3>What Are Users Actually Doing With PixelCrush AI?</h3>
+          <p>PixelCrush AI users span a wide range of interests and motivations, and the platform is more than just sweet talk. For many, it's a space to explore emotional connection, especially those who deal with loneliness or social anxiety.</p>
         </div>
 
         {/* Footer */}
