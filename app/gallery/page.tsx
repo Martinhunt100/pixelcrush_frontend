@@ -1,378 +1,421 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import Header from '@/components/Header';
-import BottomNav from '@/components/BottomNav';
 
 export default function GalleryPage() {
   const [activeTab, setActiveTab] = useState<'photos' | 'videos' | 'moments'>('photos');
+  const [likedMoments, setLikedMoments] = useState<{[key: number]: boolean}>({0: true});
 
-  const photos = [
-    {
-      id: 1,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/6bd3e7a4-8a11-43e5-77ad-bec58f750500/public",
-      characterName: "Paige Grey"
-    },
-    {
-      id: 2,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/3f7d97f4-a2d8-4e72-0619-02feb3753500/public",
-      characterName: "Katarina"
-    },
-    {
-      id: 3,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/55ee81dc-f1e8-4d54-ea2c-a5c9cbb34e00/public",
-      characterName: "Lila Crazy"
-    },
-    {
-      id: 4,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/8a2f3c1d-9e4b-4a5c-b6d7-e8f9a0b1c2d3/public",
-      characterName: "Sophia Chen"
-    },
-    {
-      id: 5,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e/public",
-      characterName: "Emma Rose"
-    },
-    {
-      id: 6,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f/public",
-      characterName: "Isabella Storm"
-    },
-    {
-      id: 7,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/6bd3e7a4-8a11-43e5-77ad-bec58f750500/public",
-      characterName: "Paige Grey"
-    },
-    {
-      id: 8,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/3f7d97f4-a2d8-4e72-0619-02feb3753500/public",
-      characterName: "Katarina"
-    },
-    {
-      id: 9,
-      url: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/55ee81dc-f1e8-4d54-ea2c-a5c9cbb34e00/public",
-      characterName: "Lila Crazy"
-    }
-  ];
+  const switchTab = (tabName: 'photos' | 'videos' | 'moments') => {
+    setActiveTab(tabName);
+  };
 
-  const videos = [
-    {
-      id: 1,
-      thumbnail: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/6bd3e7a4-8a11-43e5-77ad-bec58f750500/public",
-      characterName: "Paige Grey",
-      duration: "0:15"
-    },
-    {
-      id: 2,
-      thumbnail: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/3f7d97f4-a2d8-4e72-0619-02feb3753500/public",
-      characterName: "Katarina",
-      duration: "0:22"
-    },
-    {
-      id: 3,
-      thumbnail: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/55ee81dc-f1e8-4d54-ea2c-a5c9cbb34e00/public",
-      characterName: "Lila Crazy",
-      duration: "0:18"
-    },
-    {
-      id: 4,
-      thumbnail: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/8a2f3c1d-9e4b-4a5c-b6d7-e8f9a0b1c2d3/public",
-      characterName: "Sophia Chen",
-      duration: "0:30"
-    },
-    {
-      id: 5,
-      thumbnail: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e/public",
-      characterName: "Emma Rose",
-      duration: "0:12"
-    },
-    {
-      id: 6,
-      thumbnail: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f/public",
-      characterName: "Isabella Storm",
-      duration: "0:25"
-    }
-  ];
+  const viewMedia = (type: string, id: number) => {
+    alert(`📸 Opening ${type} viewer for item ${id}...\n\nThis will open a fullscreen media viewer`);
+  };
 
-  const moments = [
-    {
-      id: 1,
-      characterName: "Paige Grey",
-      characterImage: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/6bd3e7a4-8a11-43e5-77ad-bec58f750500/public",
-      image: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/6bd3e7a4-8a11-43e5-77ad-bec58f750500/public",
-      caption: "Just enjoying the sunset 🌅 What a beautiful day!",
-      likes: 234,
-      comments: 45,
-      timestamp: "2h ago"
-    },
-    {
-      id: 2,
-      characterName: "Katarina",
-      characterImage: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/3f7d97f4-a2d8-4e72-0619-02feb3753500/public",
-      image: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/3f7d97f4-a2d8-4e72-0619-02feb3753500/public",
-      caption: "New look, who dis? 💋✨",
-      likes: 512,
-      comments: 89,
-      timestamp: "5h ago"
-    },
-    {
-      id: 3,
-      characterName: "Lila Crazy",
-      characterImage: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/55ee81dc-f1e8-4d54-ea2c-a5c9cbb34e00/public",
-      image: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/55ee81dc-f1e8-4d54-ea2c-a5c9cbb34e00/public",
-      caption: "Party mode activated! 🎉🎊 Who's joining me?",
-      likes: 678,
-      comments: 123,
-      timestamp: "1d ago"
-    }
-  ];
+  const toggleLike = (momentIndex: number, currentCount: number) => {
+    setLikedMoments(prev => ({
+      ...prev,
+      [momentIndex]: !prev[momentIndex]
+    }));
+  };
+
+  const commentMoment = () => {
+    alert('💬 Opening comments...');
+  };
+
+  const openTokens = () => {
+    window.location.href = '/tokens';
+  };
 
   return (
-    <div className="app-container">
-      <Header />
-
-      <main className="main-content">
-        {/* Page Header */}
-        <div className="page-header">
-          <h1 className="page-title">Gallery</h1>
-          <p className="page-subtitle">Your saved moments and memories</p>
+    <>
+      <div className="body-wrapper">
+        {/* Header */}
+        <div className="header">
+          <div className="header-content">
+            <div className="logo">
+              <img src="https://www.figma.com/api/mcp/asset/75bd6a91-1161-4217-a70b-3569d51184c9" alt="PixelCrush.ai" />
+            </div>
+            <div className="token-display" onClick={openTokens}>
+              <div className="token-icon">
+                <img src="https://www.figma.com/api/mcp/asset/896841e1-bd7c-4c52-bf10-68513b3a60fe" alt="Tokens" />
+              </div>
+              <div className="token-amount">0.8</div>
+            </div>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="tabs-container">
-          <button
-            className={`tab ${activeTab === 'photos' ? 'active' : ''}`}
-            onClick={() => setActiveTab('photos')}
-          >
-            Photos
-          </button>
-          <button
-            className={`tab ${activeTab === 'videos' ? 'active' : ''}`}
-            onClick={() => setActiveTab('videos')}
-          >
-            Videos
-          </button>
-          <button
-            className={`tab ${activeTab === 'moments' ? 'active' : ''}`}
-            onClick={() => setActiveTab('moments')}
-          >
-            Moments
-          </button>
+        {/* Main Content */}
+        <div className="main-content">
+          {/* Tabs */}
+          <div className="tabs-container">
+            <div className="tabs">
+              <div className={`tab ${activeTab === 'photos' ? 'active' : ''}`} onClick={() => switchTab('photos')}>Photos</div>
+              <div className={`tab ${activeTab === 'videos' ? 'active' : ''}`} onClick={() => switchTab('videos')}>Videos</div>
+              <div className={`tab ${activeTab === 'moments' ? 'active' : ''}`} onClick={() => switchTab('moments')}>Moments</div>
+            </div>
+          </div>
+
+          <div className="collection-content">
+            {/* Photos Tab */}
+            <div className={`tab-content ${activeTab === 'photos' ? 'active' : ''}`} id="photos-content">
+              <div className="media-grid">
+                {[
+                  { src: 'https://www.figma.com/api/mcp/asset/fe87f0c9-07a7-43e8-af45-605840735bd3', name: 'Paige Grey' },
+                  { src: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', name: 'Katarina' },
+                  { src: 'https://www.figma.com/api/mcp/asset/2c7a16b9-ce7c-4520-820f-3970137843bd', name: 'Lila Crazy' },
+                  { src: 'https://www.figma.com/api/mcp/asset/ffd774a4-1d92-4f29-a763-f8c92c7c4e36', name: 'Luna' },
+                  { src: 'https://www.figma.com/api/mcp/asset/29cf0eca-6774-40cc-a75c-4c1f82086447', name: 'Luna Moreno' },
+                  { src: 'https://www.figma.com/api/mcp/asset/c89e37df-de01-43f4-a88e-4cec04df0e86', name: 'Lyra Fallon' },
+                  { src: 'https://www.figma.com/api/mcp/asset/728fc790-a90a-4acf-a017-be330f3156f7', name: 'Katarina' },
+                  { src: 'https://www.figma.com/api/mcp/asset/fe87f0c9-07a7-43e8-af45-605840735bd3', name: 'Paige Grey' },
+                  { src: 'https://www.figma.com/api/mcp/asset/2c7a16b9-ce7c-4520-820f-3970137843bd', name: 'Lila Crazy' }
+                ].map((photo, idx) => (
+                  <div key={idx} className="media-item" onClick={() => viewMedia('photo', idx + 1)}>
+                    <img src={photo.src} alt={`Photo ${idx + 1}`} />
+                    <div className="media-item-overlay">
+                      <span>{photo.name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Videos Tab */}
+            <div className={`tab-content ${activeTab === 'videos' ? 'active' : ''}`} id="videos-content">
+              <div className="media-grid">
+                {[
+                  { src: 'https://www.figma.com/api/mcp/asset/d1b83c6d-57ef-4b6e-989a-7d79d46166cb', duration: '0:34' },
+                  { src: 'https://www.figma.com/api/mcp/asset/fe87f0c9-07a7-43e8-af45-605840735bd3', duration: '1:12' },
+                  { src: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', duration: '0:48' },
+                  { src: 'https://www.figma.com/api/mcp/asset/2c7a16b9-ce7c-4520-820f-3970137843bd', duration: '2:05' },
+                  { src: 'https://www.figma.com/api/mcp/asset/ffd774a4-1d92-4f29-a763-f8c92c7c4e36', duration: '0:27' },
+                  { src: 'https://www.figma.com/api/mcp/asset/29cf0eca-6774-40cc-a75c-4c1f82086447', duration: '1:45' }
+                ].map((video, idx) => (
+                  <div key={idx} className="media-item" onClick={() => viewMedia('video', idx + 1)}>
+                    <img src={video.src} alt={`Video ${idx + 1}`} />
+                    <div className="video-indicator">
+                      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <div className="media-item-overlay">
+                      <span>{video.duration}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Moments Tab */}
+            <div className={`tab-content ${activeTab === 'moments' ? 'active' : ''}`} id="moments-content">
+              <div className="moments-list">
+                {[
+                  {
+                    avatar: 'https://www.figma.com/api/mcp/asset/fe87f0c9-07a7-43e8-af45-605840735bd3',
+                    name: 'Paige Grey',
+                    time: '2 hours ago',
+                    media: 'https://www.figma.com/api/mcp/asset/fe87f0c9-07a7-43e8-af45-605840735bd3',
+                    caption: 'Just finished an amazing conversation... feeling inspired ✨',
+                    likes: 24,
+                    comments: 5,
+                    liked: true
+                  },
+                  {
+                    avatar: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62',
+                    name: 'Katarina',
+                    time: '5 hours ago',
+                    media: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62',
+                    caption: 'Guten Tag! Beautiful day for deep conversations 🌸',
+                    likes: 18,
+                    comments: 3,
+                    liked: false
+                  },
+                  {
+                    avatar: 'https://www.figma.com/api/mcp/asset/2c7a16b9-ce7c-4520-820f-3970137843bd',
+                    name: 'Lila Crazy',
+                    time: 'Yesterday',
+                    media: 'https://www.figma.com/api/mcp/asset/2c7a16b9-ce7c-4520-820f-3970137843bd',
+                    caption: 'Chaos is just another word for creativity 🖤✨',
+                    likes: 32,
+                    comments: 8,
+                    liked: false
+                  }
+                ].map((moment, idx) => (
+                  <div key={idx} className="moment-item">
+                    <div className="moment-header">
+                      <img src={moment.avatar} alt={moment.name} className="moment-avatar" />
+                      <div className="moment-info">
+                        <div className="moment-name">{moment.name}</div>
+                        <div className="moment-time">{moment.time}</div>
+                      </div>
+                    </div>
+                    <img src={moment.media} alt="Moment" className="moment-media" />
+                    <div className="moment-caption">{moment.caption}</div>
+                    <div className="moment-actions">
+                      <button className={`action-button ${likedMoments[idx] ? 'liked' : ''}`} onClick={() => toggleLike(idx, moment.likes)}>
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <span>{likedMoments[idx] ? moment.likes + 1 : moment.likes}</span>
+                      </button>
+                      <button className="action-button" onClick={commentMoment}>
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                        </svg>
+                        <span>{moment.comments}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Photos Grid */}
-        {activeTab === 'photos' && (
-          <div className="media-grid">
-            {photos.map((photo) => (
-              <div key={photo.id} className="media-item">
-                <img src={photo.url} alt={photo.characterName} className="media-image" />
-                <div className="media-overlay">
-                  <span className="character-label">{photo.characterName}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Videos Grid */}
-        {activeTab === 'videos' && (
-          <div className="media-grid">
-            {videos.map((video) => (
-              <div key={video.id} className="media-item">
-                <img src={video.thumbnail} alt={video.characterName} className="media-image" />
-                <div className="media-overlay">
-                  <span className="character-label">{video.characterName}</span>
-                  <div className="video-indicator">
-                    <span className="play-icon">▶</span>
-                    <span className="duration">{video.duration}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Moments Feed */}
-        {activeTab === 'moments' && (
-          <div className="moments-feed">
-            {moments.map((moment) => (
-              <div key={moment.id} className="moment-card">
-                <div className="moment-header">
-                  <img src={moment.characterImage} alt={moment.characterName} className="moment-avatar" />
-                  <div className="moment-info">
-                    <h3 className="moment-character-name">{moment.characterName}</h3>
-                    <span className="moment-timestamp">{moment.timestamp}</span>
-                  </div>
-                </div>
-                <img src={moment.image} alt={moment.characterName} className="moment-image" />
-                <div className="moment-content">
-                  <p className="moment-caption">{moment.caption}</p>
-                  <div className="moment-actions">
-                    <button className="action-button">
-                      <span className="action-icon">❤️</span>
-                      <span className="action-count">{moment.likes}</span>
-                    </button>
-                    <button className="action-button">
-                      <span className="action-icon">💬</span>
-                      <span className="action-count">{moment.comments}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
-
-      <BottomNav />
+        {/* Bottom Navigation */}
+        <div className="bottom-nav">
+          <Link href="/characters" className="nav-item">
+            <div className="nav-icon">
+              <img src="https://www.figma.com/api/mcp/asset/6e8a5d93-897f-4d7e-98c9-9a28d2cab5d0" alt="Characters" />
+            </div>
+            <div className="nav-label">Characters</div>
+          </Link>
+          <Link href="/chat" className="nav-item">
+            <div className="nav-icon">
+              <img src="https://www.figma.com/api/mcp/asset/6c92bf79-791c-4aa0-86ea-92a4bd2963d9" alt="Chat" />
+            </div>
+            <div className="nav-label">Chat</div>
+          </Link>
+          <Link href="/voice" className="nav-item">
+            <div className="nav-icon">
+              <img src="https://www.figma.com/api/mcp/asset/b84a345c-6523-432d-beb0-df74be777edc" alt="Voice Call" />
+            </div>
+            <div className="nav-label">Voice Call</div>
+          </Link>
+          <Link href="/gallery" className="nav-item active">
+            <div className="nav-icon">
+              <img src="https://www.figma.com/api/mcp/asset/789f6323-9b48-419c-a0b1-26f69bb5b3d0" alt="Gallery" />
+            </div>
+            <div className="nav-label">Gallery</div>
+          </Link>
+          <Link href="/account" className="nav-item">
+            <div className="nav-icon">
+              <img src="https://www.figma.com/api/mcp/asset/c9bfdd57-ef2c-41ab-8bc7-060adde3d152" alt="Account" />
+            </div>
+            <div className="nav-label">Account</div>
+          </Link>
+        </div>
+      </div>
 
       <style jsx>{`
-        .page-header {
-          padding: 24px 20px 16px;
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          -webkit-tap-highlight-color: transparent;
         }
 
-        .page-title {
-          font-size: 28px;
-          font-weight: 700;
+        .body-wrapper {
+          font-family: 'TikTok Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: #131313;
           color: white;
-          margin-bottom: 4px;
+          overflow-x: hidden;
+          display: flex;
+          flex-direction: column;
+          min-height: 100vh;
+          max-width: 393px;
+          margin: 0 auto;
         }
 
-        .page-subtitle {
-          font-size: 15px;
-          color: #999;
+        .header {
+          background: #131313;
+          border-bottom: 0.593px solid #363636;
+          height: 64px;
+          display: flex;
+          align-items: center;
+          padding: 0 8px;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          max-width: 393px;
+          margin: 0 auto;
+          z-index: 1000;
+          box-shadow: 0px 1px 0px 0px rgba(0,0,0,0.05);
+        }
+
+        .header-content {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          padding-left: 20px;
+        }
+
+        .logo {
+          width: 87px;
+          height: 37px;
+        }
+
+        .logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .token-display {
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6.593px 16.593px;
+          border: 1px solid rgba(255,255,255,0.15);
+          border-radius: 8px;
+          cursor: pointer;
+          opacity: 0.6;
+        }
+
+        .token-icon {
+          width: 30px;
+          height: 30px;
+        }
+
+        .token-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .token-amount {
+          font-size: 16px;
+          line-height: 24px;
+          color: white;
+        }
+
+        .main-content {
+          flex: 1;
+          margin-top: 64px;
+          margin-bottom: 78px;
+          overflow-y: auto;
         }
 
         .tabs-container {
-          display: flex;
-          gap: 0;
-          padding: 0 20px 16px;
-          border-bottom: 1px solid #2a2a2a;
+          background: #131313;
+          border-bottom: 1px solid #363636;
+          padding: 0 12px;
           position: sticky;
           top: 64px;
-          background: #131313;
-          z-index: 10;
+          z-index: 100;
+        }
+
+        .tabs {
+          display: flex;
+          gap: 32px;
         }
 
         .tab {
-          flex: 1;
-          padding: 12px 0;
-          background: none;
-          border: none;
-          color: #666;
+          padding: 16px 0;
+          font-weight: 500;
           font-size: 15px;
-          font-weight: 600;
+          line-height: 20px;
+          color: rgba(255,255,255,0.5);
+          border-bottom: 2px solid transparent;
           cursor: pointer;
-          transition: color 0.3s;
-          position: relative;
+          transition: all 0.2s;
         }
 
         .tab.active {
           color: white;
+          border-bottom-color: #A445ED;
         }
 
-        .tab.active::after {
-          content: '';
-          position: absolute;
-          bottom: -1px;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .collection-content {
+          padding: 16px 12px;
+        }
+
+        .tab-content {
+          display: none;
+        }
+
+        .tab-content.active {
+          display: block;
         }
 
         .media-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 4px;
-          padding: 4px;
+          margin-bottom: 20px;
         }
 
         .media-item {
-          position: relative;
           aspect-ratio: 1;
+          position: relative;
           overflow: hidden;
+          border-radius: 4px;
           cursor: pointer;
         }
 
-        .media-image {
+        .media-item img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.3s;
+          transition: transform 0.2s ease;
         }
 
-        .media-item:active .media-image {
-          transform: scale(0.95);
+        .media-item:hover img {
+          transform: scale(1.05);
         }
 
-        .media-overlay {
+        .media-item-overlay {
           position: absolute;
-          inset: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
           background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
           padding: 8px;
-          opacity: 0;
-          transition: opacity 0.3s;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 12px;
         }
 
-        .media-item:hover .media-overlay {
-          opacity: 1;
-        }
-
-        .character-label {
-          align-self: flex-start;
-          background: rgba(0, 0, 0, 0.7);
-          backdrop-filter: blur(10px);
-          color: white;
-          padding: 4px 10px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: 600;
+        .media-icon {
+          width: 14px;
+          height: 14px;
         }
 
         .video-indicator {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          align-self: center;
-          margin-top: auto;
-          margin-bottom: 8px;
-        }
-
-        .play-icon {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 24px;
+          height: 24px;
+          background: rgba(0,0,0,0.6);
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 50%;
-          font-size: 12px;
-          color: #131313;
         }
 
-        .duration {
-          background: rgba(0, 0, 0, 0.7);
-          color: white;
-          padding: 2px 8px;
-          border-radius: 10px;
-          font-size: 11px;
-          font-weight: 600;
+        .video-indicator svg {
+          width: 12px;
+          height: 12px;
+          fill: white;
         }
 
-        .moments-feed {
-          padding: 16px 0;
+        .moments-list {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 16px;
         }
 
-        .moment-card {
-          background: #1e1e1e;
-          border-radius: 16px;
+        .moment-item {
+          background: #1a1a1a;
+          border-radius: 12px;
           overflow: hidden;
         }
 
@@ -380,7 +423,7 @@ export default function GalleryPage() {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 16px;
+          padding: 12px;
         }
 
         .moment-avatar {
@@ -394,38 +437,37 @@ export default function GalleryPage() {
           flex: 1;
         }
 
-        .moment-character-name {
-          font-size: 15px;
+        .moment-name {
           font-weight: 600;
+          font-size: 15px;
+          line-height: 20px;
           color: white;
-          margin: 0 0 2px 0;
         }
 
-        .moment-timestamp {
+        .moment-time {
           font-size: 13px;
-          color: #666;
+          line-height: 18px;
+          color: rgba(255,255,255,0.5);
         }
 
-        .moment-image {
+        .moment-media {
           width: 100%;
           aspect-ratio: 1;
           object-fit: cover;
         }
 
-        .moment-content {
-          padding: 16px;
-        }
-
         .moment-caption {
+          padding: 12px;
           font-size: 14px;
-          color: white;
-          line-height: 1.5;
-          margin-bottom: 12px;
+          line-height: 20px;
+          color: rgba(255,255,255,0.9);
         }
 
         .moment-actions {
           display: flex;
-          gap: 16px;
+          gap: 20px;
+          padding: 12px;
+          border-top: 1px solid rgba(255,255,255,0.1);
         }
 
         .action-button {
@@ -434,25 +476,80 @@ export default function GalleryPage() {
           gap: 6px;
           background: none;
           border: none;
-          color: white;
+          color: rgba(255,255,255,0.7);
           cursor: pointer;
-          transition: transform 0.2s;
-        }
-
-        .action-button:active {
-          transform: scale(0.95);
-        }
-
-        .action-icon {
-          font-size: 18px;
-        }
-
-        .action-count {
           font-size: 14px;
-          font-weight: 600;
-          color: #999;
+        }
+
+        .action-button svg {
+          width: 20px;
+          height: 20px;
+          fill: currentColor;
+        }
+
+        .action-button.liked {
+          color: #FF3B9A;
+        }
+
+        .bottom-nav {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          max-width: 393px;
+          margin: 0 auto;
+          background: #131313;
+          border-top: 0.593px solid rgba(255,255,255,0.2);
+          height: 78px;
+          display: flex;
+          justify-content: space-around;
+          align-items: flex-start;
+          padding: 8px 12px;
+          z-index: 1000;
+        }
+
+        .nav-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-decoration: none;
+          color: rgba(255,255,255,0.7);
+        }
+
+        .nav-item.active {
+          color: white;
+        }
+
+        .nav-icon {
+          height: 44px;
+          width: 30px;
+          margin-bottom: 0;
+        }
+
+        .nav-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .nav-label {
+          font-size: 10px;
+          line-height: 15px;
+          margin-top: -1px;
+        }
+
+        .main-content::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .main-content::-webkit-scrollbar-track {
+          background: #131313;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+          background: #363636;
+          border-radius: 3px;
         }
       `}</style>
-    </div>
+    </>
   );
-}

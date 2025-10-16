@@ -1,491 +1,474 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import BottomNav from '@/components/BottomNav';
 
 export default function Homepage() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const characters = [
-    {
-      name: "Paige Grey",
-      image: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/6bd3e7a4-8a11-43e5-77ad-bec58f750500/public",
-      personality: "Adventurous & Spontaneous"
-    },
-    {
-      name: "Katarina",
-      image: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/3f7d97f4-a2d8-4e72-0619-02feb3753500/public",
-      personality: "Confident & Playful"
-    },
-    {
-      name: "Lila Crazy",
-      image: "https://imagedelivery.net/1jofzuZbO-j3cbnn4BjhZQ/55ee81dc-f1e8-4d54-ea2c-a5c9cbb34e00/public",
-      personality: "Wild & Unpredictable"
-    }
+    { emoji: '👩', name: 'Sophia', desc: 'Flirty & Playful • Ready to Chat' },
+    { emoji: '🧑', name: 'Alex', desc: 'Adventurous & Fun • Let\'s Talk' },
+    { emoji: '💃', name: 'Maya', desc: 'Sweet & Caring • Always Here' }
   ];
 
   const faqs = [
-    {
-      question: "What is PixelCrush.ai?",
-      answer: "PixelCrush.ai is an AI-powered platform where you can chat, call, and connect with virtual companions. Each character has unique personalities and can engage in meaningful conversations."
-    },
-    {
-      question: "How do tokens work?",
-      answer: "Tokens are used for premium features like extended conversations, voice calls, and exclusive content. You can purchase token packages or subscribe for unlimited access."
-    },
-    {
-      question: "Can I create my own character?",
-      answer: "Custom character creation is coming soon! For now, explore our diverse roster of pre-made characters, each with unique personalities and interests."
-    },
-    {
-      question: "Is my data private?",
-      answer: "Absolutely. All conversations are encrypted and private. We never share your data with third parties. Your privacy is our top priority."
-    },
-    {
-      question: "What's the difference between Free and Premium?",
-      answer: "Free users get limited messages per day. Premium subscribers enjoy unlimited messaging, voice calls, priority responses, and exclusive character content."
-    }
+    'What is PixelCrush AI?',
+    'Is PixelCrush AI legitimate and safe to use?',
+    'How will PixelCrush AI appear on my bank statements?',
+    'Can I customize my PixelCrush AI experience?',
+    'Who uses PixelCrush AI and for what purpose?',
+    'What is an AI Companion and can I create my own?',
+    'Can my AI Companion send images, video, or voice messages?',
+    'Can I roleplay with my AI Companion?'
   ];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % characters.length);
-    }, 4000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [characters.length]);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % characters.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + characters.length) % characters.length);
-  };
-
   return (
-    <div className="app-container">
-      <Header />
-
-      <main className="main-content">
-        {/* Hero Section */}
-        <div className="hero-section">
-          <div className="hero-content">
-            <h1 className="hero-title">
-              Connect with AI<br />Companions
-            </h1>
-            <p className="hero-subtitle">
-              Chat, call, and create memories with personalities that understand you
-            </p>
-            <Link href="/characters" className="cta-button">
-              Meet Characters
-            </Link>
-          </div>
+    <>
+      {/* Header */}
+      <div className="header">
+        <div className="logo-container">
+          <img src="https://www.figma.com/api/mcp/asset/0d9e6ba0-12a7-48ba-802d-9c01ea4098cb" alt="PixelCrush Logo" className="logo-img" />
         </div>
 
+        <div className="header-right">
+          <div className="token-badge">
+            <img src="https://www.figma.com/api/mcp/asset/0721d99b-e150-4ac8-a20e-e8287e9472aa" alt="Token" className="token-icon" />
+            <span className="token-text">0.8</span>
+          </div>
+          <div className="vertical-divider"></div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="main-content">
         {/* Character Carousel */}
-        <div className="carousel-section">
-          <h2 className="section-title">Featured Characters</h2>
-          <div className="carousel-container">
-            <button className="carousel-button prev" onClick={prevSlide}>
-              ←
-            </button>
-
-            <div className="carousel-track">
-              {characters.map((char, index) => (
-                <div
-                  key={index}
-                  className={`carousel-slide ${index === currentSlide ? 'active' : ''}`}
-                  style={{
-                    transform: `translateX(${(index - currentSlide) * 100}%)`,
-                  }}
-                >
-                  <img src={char.image} alt={char.name} className="carousel-image" />
-                  <div className="carousel-info">
-                    <h3 className="carousel-name">{char.name}</h3>
-                    <p className="carousel-personality">{char.personality}</p>
-                  </div>
+        <div className="character-carousel-container">
+          <div className="character-carousel">
+            {characters.map((char, index) => (
+              <div key={index} className={`character-slide ${index === currentSlide ? 'active' : ''}`}>
+                <div className="character-emoji">{char.emoji}</div>
+                <div className="character-info-overlay">
+                  <div className="character-name">{char.name}</div>
+                  <div className="character-desc">{char.desc}</div>
                 </div>
-              ))}
-            </div>
-
-            <button className="carousel-button next" onClick={nextSlide}>
-              →
-            </button>
-          </div>
-
-          {/* Carousel Indicators */}
-          <div className="carousel-indicators">
-            {characters.map((_, index) => (
-              <button
-                key={index}
-                className={`indicator ${index === currentSlide ? 'active' : ''}`}
-                onClick={() => setCurrentSlide(index)}
-              />
+              </div>
             ))}
-          </div>
-        </div>
 
-        {/* Features Grid */}
-        <div className="features-section">
-          <h2 className="section-title">Why PixelCrush?</h2>
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">💬</div>
-              <h3>Smart Conversations</h3>
-              <p>Engaging AI that remembers your chats and grows with you</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📞</div>
-              <h3>Voice Calls</h3>
-              <p>Real-time voice conversations with realistic AI voices</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📸</div>
-              <h3>Visual Memories</h3>
-              <p>Request and receive AI-generated photos and moments</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🎭</div>
-              <h3>Unique Personalities</h3>
-              <p>Each character has distinct traits, interests, and styles</p>
+            <div className="swipe-indicator">
+              {characters.map((_, index) => (
+                <div key={index} className={`dot ${index === currentSlide ? 'active' : ''}`}></div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* FAQ Section */}
         <div className="faq-section">
-          <h2 className="section-title">Frequently Asked Questions</h2>
           <div className="faq-container">
             {faqs.map((faq, index) => (
               <div key={index} className="faq-item">
-                <button
-                  className="faq-question"
-                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                >
-                  <span>{faq.question}</span>
-                  <span className="faq-icon">{openFaq === index ? '−' : '+'}</span>
-                </button>
-                {openFaq === index && (
-                  <div className="faq-answer">
-                    {faq.answer}
-                  </div>
-                )}
+                <div className="faq-question">
+                  <h3>{faq}</h3>
+                  <div className="faq-icon">▼</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* CTA Footer */}
-        <div className="cta-footer">
-          <h2>Ready to Start?</h2>
-          <p>Join thousands connecting with AI companions</p>
-          <Link href="/characters" className="cta-button-secondary">
-            Browse All Characters
-          </Link>
-        </div>
-      </main>
+        {/* Main Content Section */}
+        <div className="content-section">
+          <h2>PixelCrush Makes Every Conversation Feel Personal</h2>
+          <p>Whether you're seeking a light-hearted chat after work or a heartfelt dialogue when you're feeling low, PixelCrush AI is designed to make every interaction feel genuine. Built with advanced personality modeling and memory retention, PixelCrush learns what you like, remembers what matters, and responds in a way that feels natural and deeply personal.</p>
 
-      <BottomNav />
+          <p>Unlike static chatbot platforms, PixelCrush AI evolves with every exchange, adjusting its tone, emotional intelligence, and style to match your unique vibe. Think of it like talking to someone who not only listens but genuinely gets you.</p>
+
+          <p>But what makes PixelCrush AI even more intriguing? It's the variety and depth of characters you can choose from and how they fit seamlessly into your life. Let us show you what the platform is all about.</p>
+
+          <h2>PixelCrush has an AI Companion for Every Moment</h2>
+          <p>No two moods are the same, and neither are PixelCrush AI's characters. With over 100 different characters to choose from, you're never stuck with one tone or type.</p>
+
+          <p>Looking for romance? The AI Girlfriend experience has been crafted for meaningful, emotionally rich conversations. These characters are flirty, affectionate, and deeply attentive. They remember your stories, send you thoughtful messages, and even surprise you with custom photos or sweet voice notes that sound... well, human.</p>
+        </div>
+
+        {/* Footer */}
+        <div className="footer">
+          <div className="footer-section">
+            <h4>Legal & Support</h4>
+            <Link href="/legal" className="footer-link">Terms and Policies</Link>
+            <Link href="/help" className="footer-link">Help Center</Link>
+          </div>
+
+          <div className="footer-copyright">
+            © 2025 PixelCrush.ai. All Rights Reserved
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="bottom-nav">
+        <Link href="/" className="nav-item active">
+          <img src="https://www.figma.com/api/mcp/asset/071a7c81-6402-4350-b1b0-ba26e6cab360" alt="Characters" className="nav-icon" />
+          <span className="nav-label">Characters</span>
+        </Link>
+
+        <Link href="/chat-landing" className="nav-item">
+          <img src="https://www.figma.com/api/mcp/asset/85aa9d89-f84b-416d-941e-9a3435fa544f" alt="Chat" className="nav-icon" />
+          <span className="nav-label">Chat</span>
+        </Link>
+
+        <Link href="/voice" className="nav-item">
+          <img src="https://www.figma.com/api/mcp/asset/a67f4f29-9007-4f4c-9cb6-539cfd116dfb" alt="Voice Call" className="nav-icon" />
+          <span className="nav-label">Voice Call</span>
+        </Link>
+
+        <Link href="/gallery" className="nav-item">
+          <img src="https://www.figma.com/api/mcp/asset/52ffa327-17fa-4d67-9183-9a6523dc9d70" alt="Gallery" className="nav-icon" />
+          <span className="nav-label">Gallery</span>
+        </Link>
+
+        <Link href="/account" className="nav-item">
+          <img src="https://www.figma.com/api/mcp/asset/571e2d66-db34-4abc-8050-e64b3838e379" alt="Account" className="nav-icon" />
+          <span className="nav-label">Account</span>
+        </Link>
+      </div>
 
       <style jsx>{`
-        .hero-section {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 60px 20px;
-          text-align: center;
-          border-radius: 0 0 30px 30px;
-          margin-bottom: 40px;
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          -webkit-tap-highlight-color: transparent;
         }
 
-        .hero-content {
-          max-width: 350px;
-          margin: 0 auto;
+        .header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 64px;
+          background: #131313;
+          display: flex;
+          align-items: center;
+          padding: 0 8px;
+          z-index: 1000;
+          border-bottom: 0.593px solid #363636;
+          box-shadow: 0px 1px 0px 0px rgba(0,0,0,0.05);
         }
 
-        .hero-title {
-          font-size: 36px;
-          font-weight: 700;
-          color: white;
-          margin-bottom: 16px;
-          line-height: 1.2;
+        .logo-container {
+          height: 49px;
+          width: 114px;
         }
 
-        .hero-subtitle {
+        .logo-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .header-right {
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          gap: 0;
+        }
+
+        .token-badge {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 6.593px 16.593px;
+          border: 1px solid white;
+          border-radius: 5px;
+          opacity: 0.6;
+        }
+
+        .token-icon {
+          width: 40px;
+          height: 40px;
+        }
+
+        .token-text {
           font-size: 16px;
-          color: rgba(255, 255, 255, 0.9);
-          margin-bottom: 30px;
-          line-height: 1.5;
-        }
-
-        .cta-button {
-          display: inline-block;
-          background: white;
-          color: #667eea;
-          padding: 14px 32px;
-          border-radius: 25px;
-          font-weight: 600;
-          text-decoration: none;
-          transition: transform 0.2s;
-        }
-
-        .cta-button:hover {
-          transform: scale(1.05);
-        }
-
-        .carousel-section {
-          padding: 0 20px 40px;
-        }
-
-        .section-title {
-          font-size: 24px;
-          font-weight: 700;
+          font-weight: 400;
           color: white;
-          margin-bottom: 24px;
-          text-align: center;
+          line-height: 24px;
         }
 
-        .carousel-container {
+        .vertical-divider {
+          width: 1px;
+          height: 24px;
+          background: rgba(16, 24, 40, 0.1);
+          margin: 0 0 0 0;
+        }
+
+        .main-content {
+          margin-top: 64px;
+          margin-bottom: 70px;
+          min-height: calc(100vh - 134px);
+        }
+
+        .character-carousel-container {
+          width: 100%;
+          height: calc(100vh - 134px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .character-carousel {
           position: relative;
           width: 100%;
-          max-width: 350px;
-          margin: 0 auto;
+          height: 100%;
           overflow: hidden;
-          border-radius: 20px;
-          height: 450px;
+          background: linear-gradient(135deg, #1A1A2E, #16213E);
         }
 
-        .carousel-track {
-          position: relative;
-          width: 100%;
-          height: 100%;
-        }
-
-        .carousel-slide {
+        .character-slide {
           position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
-          transition: transform 0.5s ease;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
           opacity: 0;
+          transition: opacity 0.8s ease-in-out;
         }
 
-        .carousel-slide.active {
+        .character-slide.active {
           opacity: 1;
         }
 
-        .carousel-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
+        .character-emoji {
+          font-size: 120px;
+          animation: float 3s ease-in-out infinite;
+          margin-bottom: 40px;
         }
 
-        .carousel-info {
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
+
+        .character-info-overlay {
           position: absolute;
           bottom: 0;
           left: 0;
           right: 0;
-          background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-          padding: 30px 20px 20px;
+          padding: 25px;
+          background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
         }
 
-        .carousel-name {
-          font-size: 24px;
+        .character-name {
+          font-size: 28px;
           font-weight: 700;
-          color: white;
-          margin-bottom: 4px;
+          margin-bottom: 8px;
+          background: linear-gradient(135deg, #FF1B6B, #A445ED);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
 
-        .carousel-personality {
+        .character-desc {
           font-size: 14px;
-          color: rgba(255, 255, 255, 0.8);
+          color: rgba(255,255,255,0.7);
+          line-height: 20px;
         }
 
-        .carousel-button {
+        .swipe-indicator {
           position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          border: none;
-          color: white;
-          font-size: 24px;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          cursor: pointer;
-          z-index: 10;
-          transition: background 0.3s;
-        }
-
-        .carousel-button:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-
-        .carousel-button.prev {
-          left: 10px;
-        }
-
-        .carousel-button.next {
-          right: 10px;
-        }
-
-        .carousel-indicators {
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
-          justify-content: center;
           gap: 8px;
-          margin-top: 20px;
+          z-index: 50;
         }
 
-        .indicator {
+        .dot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: #363636;
-          border: none;
-          cursor: pointer;
-          transition: all 0.3s;
+          background: rgba(255,255,255,0.3);
         }
 
-        .indicator.active {
-          background: #667eea;
-          width: 24px;
-          border-radius: 4px;
+        .dot.active {
+          background: #fff;
+          animation: pulse 2s ease-in-out infinite;
         }
 
-        .features-section {
-          padding: 40px 20px;
-        }
-
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
-          max-width: 350px;
-          margin: 0 auto;
-        }
-
-        .feature-card {
-          background: #1e1e1e;
-          padding: 24px 16px;
-          border-radius: 16px;
-          text-align: center;
-        }
-
-        .feature-icon {
-          font-size: 32px;
-          margin-bottom: 12px;
-        }
-
-        .feature-card h3 {
-          font-size: 16px;
-          font-weight: 600;
-          color: white;
-          margin-bottom: 8px;
-        }
-
-        .feature-card p {
-          font-size: 13px;
-          color: #999;
-          line-height: 1.4;
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
 
         .faq-section {
-          padding: 40px 20px;
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 8px 20px 0;
+          width: 338.67px;
         }
 
         .faq-container {
-          max-width: 350px;
-          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 28px;
+          padding-top: 40px;
         }
 
         .faq-item {
-          background: #1e1e1e;
-          border-radius: 12px;
-          margin-bottom: 12px;
-          overflow: hidden;
+          background: #1a1a1a;
+          border: 1px solid #282828;
         }
 
         .faq-question {
-          width: 100%;
+          padding: 20px 12px;
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 16px 20px;
-          background: none;
-          border: none;
-          color: white;
-          font-size: 15px;
-          font-weight: 500;
-          text-align: left;
+          justify-content: space-between;
           cursor: pointer;
-          transition: background 0.3s;
         }
 
-        .faq-question:hover {
-          background: #252525;
+        .faq-question h3 {
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 32px;
+          color: white;
+          flex: 1;
         }
 
         .faq-icon {
-          font-size: 20px;
-          color: #667eea;
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
         }
 
-        .faq-answer {
-          padding: 0 20px 16px;
-          color: #999;
-          font-size: 14px;
-          line-height: 1.6;
-          animation: fadeIn 0.3s;
+        .content-section {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 40.593px 32.593px 32.593px;
+          width: 338.67px;
+          background: #1a1a1a;
+          border: 1px solid #282828;
         }
 
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .cta-footer {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 50px 20px;
-          text-align: center;
-          border-radius: 30px 30px 0 0;
-          margin-top: 40px;
-        }
-
-        .cta-footer h2 {
-          font-size: 28px;
+        .content-section h2 {
+          font-size: 22px;
           font-weight: 700;
+          line-height: 40px;
           color: white;
-          margin-bottom: 12px;
+          margin-bottom: 32px;
         }
 
-        .cta-footer p {
-          font-size: 16px;
-          color: rgba(255, 255, 255, 0.9);
-          margin-bottom: 24px;
+        .content-section p {
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 20px;
+          color: rgba(255,255,255,0.7);
+          margin-bottom: 32px;
         }
 
-        .cta-button-secondary {
-          display: inline-block;
-          background: white;
-          color: #667eea;
-          padding: 14px 32px;
-          border-radius: 25px;
-          font-weight: 600;
+        .footer {
+          background: black;
+          padding: 40px 20px;
+          max-width: 1280px;
+          margin: 0 auto;
+        }
+
+        .footer-section {
+          margin-bottom: 35px;
+        }
+
+        .footer-section h4 {
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 20px;
+          color: rgba(255,255,255,0.7);
+          margin-bottom: 20px;
+        }
+
+        .footer-link {
+          display: block;
+          font-size: 14px;
+          font-weight: 500;
+          line-height: 20px;
+          color: white;
+          text-decoration: underline;
+          margin-bottom: 20px;
+          cursor: pointer;
+        }
+
+        .footer-copyright {
+          text-align: center;
+          font-size: 14px;
+          font-weight: 500;
+          line-height: 24px;
+          color: rgba(255,255,255,0.7);
+          padding: 0 16px;
+        }
+
+        .bottom-nav {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 70px;
+          background: #131313;
+          border-top: 0.593px solid rgba(255,255,255,0.2);
+          display: flex;
+          z-index: 1000;
+        }
+
+        .nav-item {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 3px;
+          cursor: pointer;
           text-decoration: none;
-          transition: transform 0.2s;
         }
 
-        .cta-button-secondary:hover {
-          transform: scale(1.05);
+        .nav-icon {
+          width: 30px;
+          height: 30px;
+          object-fit: contain;
+        }
+
+        .nav-label {
+          font-size: 10px;
+          font-weight: 400;
+          line-height: 15px;
+          color: rgba(255,255,255,0.7);
+        }
+
+        .nav-item.active .nav-label {
+          background: linear-gradient(135deg, #FF1B6B, #A445ED, #00D4FF);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        @media (min-width: 768px) {
+          .character-carousel-container {
+            height: calc(100vh - 134px);
+          }
         }
       `}</style>
-    </div>
+    </>
   );
 }
