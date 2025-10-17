@@ -82,7 +82,8 @@ export default function HomePage() {
           display: 'flex',
           alignItems: 'center',
           width: '100%',
-          paddingLeft: '20px'
+          paddingLeft: '25px',
+          paddingRight: '8px'
         }}>
           <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
             <img 
@@ -221,7 +222,8 @@ export default function HomePage() {
           alignItems: 'center',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
-          gap: '4px'
+          gap: '4px',
+          opacity: 0.7
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="https://www.figma.com/api/mcp/asset/6c92bf79-791c-4aa0-86ea-92a4bd2963d9" alt="Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -239,7 +241,8 @@ export default function HomePage() {
           alignItems: 'center',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
-          gap: '4px'
+          gap: '4px',
+          opacity: 0.7
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="https://www.figma.com/api/mcp/asset/b84a345c-6523-432d-beb0-df74be777edc" alt="Voice Call" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -257,7 +260,8 @@ export default function HomePage() {
           alignItems: 'center',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
-          gap: '4px'
+          gap: '4px',
+          opacity: 0.7
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="https://www.figma.com/api/mcp/asset/789f6323-9b48-419c-a0b1-26f69bb5b3d0" alt="Gallery" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -275,7 +279,8 @@ export default function HomePage() {
           alignItems: 'center',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
-          gap: '4px'
+          gap: '4px',
+          opacity: 0.7
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="https://www.figma.com/api/mcp/asset/c9bfdd57-ef2c-41ab-8bc7-060adde3d152" alt="Account" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
