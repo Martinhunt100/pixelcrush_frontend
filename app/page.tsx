@@ -98,11 +98,10 @@ export default function HomePage() {
               alignItems: 'center',
               gap: '8px',
               padding: '6.593px 16.593px',
-              border: '1px solid rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.8)',
               borderRadius: '8px',
               cursor: 'pointer',
-              textDecoration: 'none',
-              opacity: 0.6
+              textDecoration: 'none'
             }}
           >
             <div style={{ width: '30px', height: '30px' }}>
@@ -116,7 +115,7 @@ export default function HomePage() {
               fontFamily: 'Poppins, sans-serif',
               fontSize: '16px',
               lineHeight: '24px',
-              color: 'white'
+              color: 'rgba(255,255,255,0.8)'
             }}>0.8</div>
           </a>
         </div>
