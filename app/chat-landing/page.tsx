@@ -265,12 +265,15 @@ export default function ChatLandingPage() {
         .token-icon {
           width: 30px;
           height: 30px;
+          flex-shrink: 0;
         }
 
         .token-icon img {
           width: 100%;
           height: 100%;
           object-fit: contain;
+          max-width: 30px;
+          max-height: 30px;
         }
 
         .token-amount {
