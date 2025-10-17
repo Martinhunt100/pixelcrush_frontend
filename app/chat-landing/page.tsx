@@ -289,7 +289,7 @@ export default function ChatLandingPage() {
         }
 
         .chat-list-container {
-          padding: 24px 12px;
+          padding: 24px 16px;
         }
 
         .chat-list-header {
@@ -309,7 +309,7 @@ export default function ChatLandingPage() {
         }
 
         .search-container {
-          margin-bottom: 16px;
+          margin-bottom: 24px;
           position: relative;
         }
 
@@ -348,11 +348,11 @@ export default function ChatLandingPage() {
         .chat-item {
           background: #303030;
           border-radius: 10px;
-          padding: 8px;
-          margin-bottom: 12px;
+          padding: 12px;
+          margin-bottom: 16px;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
           cursor: pointer;
           transition: transform 0.2s ease;
         }
@@ -441,11 +441,11 @@ export default function ChatLandingPage() {
         .new-chat-item {
           background: #303030;
           border-radius: 10px;
-          padding: 8px;
-          margin-bottom: 12px;
+          padding: 12px;
+          margin-bottom: 16px;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
           cursor: pointer;
           transition: transform 0.2s ease;
           border: 2px dashed rgba(255,255,255,0.3);
