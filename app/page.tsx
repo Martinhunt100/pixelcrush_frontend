@@ -3,20 +3,32 @@
 import { useState, useEffect } from 'react';
 
 export default function HomePage() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const slides = [
-    { emoji: '👩', name: 'Sophia', desc: 'Flirty & Playful • Ready to Chat' },
-    { emoji: '🧑', name: 'Alex', desc: 'Adventurous & Fun • Let\'s Talk' },
-    { emoji: '💃', name: 'Maya', desc: 'Sweet & Caring • Always Here' }
+  const characters = [
+    { 
+      name: 'Luna', 
+      image: 'https://www.figma.com/api/mcp/asset/c4e8e8f5-0b5a-4c5e-9f3a-1b2c3d4e5f6a'
+    },
+    { 
+      name: 'Katarina', 
+      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
+    },
+    { 
+      name: 'Katarina', 
+      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
+    },
+    { 
+      name: 'Katarina', 
+      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
+    },
+    { 
+      name: 'Katarina', 
+      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
+    },
+    { 
+      name: 'Katarina', 
+      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
+    }
   ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % 3);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div style={{ background: '#131313', minHeight: '100vh', fontFamily: 'Poppins, sans-serif', margin: 0, padding: 0 }}>
@@ -64,98 +76,50 @@ export default function HomePage() {
       </div>
 
       {/* Main Content */}
-      <div style={{ marginTop: '64px', marginBottom: '70px', minHeight: 'calc(100vh - 134px)' }}>
-        {/* Character Carousel */}
+      <div style={{ marginTop: '64px', marginBottom: '70px', padding: '20px 16px' }}>
+        {/* Character Grid */}
         <div style={{
-          width: '100%',
-          height: 'calc(100vh - 134px)',
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(135deg, #1A1A2E, #16213E)'
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '16px',
+          maxWidth: '600px',
+          margin: '0 auto'
         }}>
-          {/* Carousel Track */}
-          <div style={{
-            display: 'flex',
-            width: `${slides.length * 100}%`,
-            height: '100%',
-            transform: `translateX(-${currentSlide * (100 / slides.length)}%)`,
-            transition: 'transform 0.8s ease-in-out'
-          }}>
-            {slides.map((slide, index) => (
-              <div 
-                key={index}
+          {characters.map((character, index) => (
+            <div 
+              key={index}
+              style={{
+                position: 'relative',
+                aspectRatio: '3/4',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                cursor: 'pointer'
+              }}
+            >
+              <img 
+                src={character.image}
+                alt={character.name}
                 style={{
-                  width: `${100 / slides.length}%`,
+                  width: '100%',
                   height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  flexShrink: 0
-                }}
-              >
-                <div className="floating-emoji" style={{
-                  fontSize: '120px',
-                  marginBottom: '40px'
-                }}>
-                  {slide.emoji}
-                </div>
-                <div style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  padding: '25px',
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.95), transparent)'
-                }}>
-                  <div style={{
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    marginBottom: '8px',
-                    background: 'linear-gradient(135deg, #FF1B6B, #A445ED)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
-                  }}>
-                    {slide.name}
-                  </div>
-                  <div style={{
-                    fontSize: '14px',
-                    color: 'rgba(255,255,255,0.7)',
-                    lineHeight: '20px'
-                  }}>
-                    {slide.desc}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Dots */}
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            gap: '8px',
-            zIndex: 50
-          }}>
-            {slides.map((_, index) => (
-              <div
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: currentSlide === index ? '#fff' : 'rgba(255,255,255,0.3)',
-                  cursor: 'pointer'
+                  objectFit: 'cover'
                 }}
               />
-            ))}
-          </div>
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '16px',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                color: 'white',
+                fontSize: '20px',
+                fontWeight: 600
+              }}>
+                {character.name}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* FAQ Section */}
