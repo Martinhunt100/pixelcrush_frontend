@@ -7,7 +7,47 @@ export default function HomePage() {
     { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina2' },
     { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina3' },
     { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina4' },
-    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina5' }
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina5' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina6' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina7' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina8' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina9' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina10' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina11' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina12' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina13' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina14' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina15' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina16' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina17' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina18' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina19' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina20' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina21' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina22' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina23' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina24' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina25' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina26' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina27' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina28' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina29' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina30' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina31' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina32' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina33' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina34' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina35' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina36' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina37' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina38' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina39' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina40' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina41' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina42' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina43' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina44' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina45' }
   ];
 
   const selectCharacter = (characterId) => {
@@ -87,27 +127,24 @@ export default function HomePage() {
       <div style={{
         flex: 1,
         overflowY: 'auto',
-        padding: '12px 3.335px 20px',
+        padding: '12px 0 80px 0',
         WebkitOverflowScrolling: 'touch'
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '186px 186px',
-          gap: 0,
-          columnGap: '3.335px',
-          rowGap: 0
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 0
         }}>
           {characters.map((character, idx) => (
             <div 
               key={idx}
               onClick={() => selectCharacter(character.id)}
               style={{
-                width: '186px',
-                height: '257px',
+                width: '100%',
+                aspectRatio: '186/257',
                 position: 'relative',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                marginBottom: 0,
                 transition: 'transform 0.2s ease'
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}

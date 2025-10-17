@@ -35,12 +35,12 @@ localPort = 8080
 externalPort = 80
 
 [[ports]]
-localPort = 34553
-externalPort = 3000
+localPort = 33541
+externalPort = 3001
 
 [[ports]]
-localPort = 46135
-externalPort = 3001
+localPort = 34553
+externalPort = 3000
 
 [nix]
 packages = ["psmisc", "lsof"]
