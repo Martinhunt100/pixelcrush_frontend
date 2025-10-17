@@ -213,7 +213,7 @@ export default function HomePage() {
           }}>Home</div>
         </a>
 
-        <a href="/chat" style={{
+        <a href="/chat-landing" style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
