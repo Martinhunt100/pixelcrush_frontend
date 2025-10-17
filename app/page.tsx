@@ -1,100 +1,117 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
 export default function HomePage() {
   const characters = [
-    { 
-      name: 'Luna', 
-      image: 'https://www.figma.com/api/mcp/asset/c4e8e8f5-0b5a-4c5e-9f3a-1b2c3d4e5f6a'
-    },
-    { 
-      name: 'Katarina', 
-      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
-    },
-    { 
-      name: 'Katarina', 
-      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
-    },
-    { 
-      name: 'Katarina', 
-      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
-    },
-    { 
-      name: 'Katarina', 
-      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
-    },
-    { 
-      name: 'Katarina', 
-      image: 'https://www.figma.com/api/mcp/asset/d5f9f9g6-1c6b-5d6f-0g4b-2c3d4e5f6g7b'
-    }
+    { name: 'Luna', image: 'https://www.figma.com/api/mcp/asset/ffd774a4-1d92-4f29-a763-f8c92c7c4e36', id: 'luna' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina2' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina3' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina4' },
+    { name: 'Katarina', image: 'https://www.figma.com/api/mcp/asset/2ae3f347-fba1-48d7-a73b-a7f88d41ea62', id: 'katarina5' }
   ];
 
+  const selectCharacter = (characterId) => {
+    window.location.href = `/chat?character=${characterId}`;
+  };
+
   return (
-    <div style={{ background: '#131313', minHeight: '100vh', fontFamily: 'Poppins, sans-serif', margin: 0, padding: 0 }}>
+    <div style={{
+      fontFamily: 'Poppins, sans-serif',
+      background: '#131313',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+      maxWidth: '393px',
+      margin: '0 auto'
+    }}>
       {/* Header */}
       <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '64px',
         background: '#131313',
+        borderBottom: '0.593px solid #363636',
+        height: '64px',
         display: 'flex',
         alignItems: 'center',
         padding: '0 8px',
-        zIndex: 1000,
-        borderBottom: '0.593px solid #363636',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
-        <div style={{ height: '49px', width: '114px' }}>
-          <img 
-            src="https://www.figma.com/api/mcp/asset/0d9e6ba0-12a7-48ba-802d-9c01ea4098cb" 
-            alt="PixelCrush Logo" 
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
-        </div>
-        
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6.593px 16.593px',
-            border: '1px solid white',
-            borderRadius: '5px',
-            opacity: 0.6
-          }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          paddingLeft: '20px'
+        }}>
+          <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
             <img 
-              src="https://www.figma.com/api/mcp/asset/0721d99b-e150-4ac8-a20e-e8287e9472aa" 
-              alt="Token" 
-              style={{ width: '40px', height: '40px' }}
+              src="https://www.figma.com/api/mcp/asset/75bd6a91-1161-4217-a70b-3569d51184c9"
+              alt="PixelCrush.ai"
+              style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
             />
-            <span style={{ fontSize: '16px', fontWeight: 400, color: 'white', lineHeight: '24px' }}>0.8</span>
-          </div>
+          </a>
+          <a 
+            href="/tokens"
+            style={{
+              marginLeft: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6.593px 16.593px',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              opacity: 0.6
+            }}
+          >
+            <div style={{ width: '30px', height: '30px' }}>
+              <img 
+                src="https://www.figma.com/api/mcp/asset/896841e1-bd7c-4c52-bf10-68513b3a60fe"
+                alt="Tokens"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
+            <div style={{
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: '16px',
+              lineHeight: '24px',
+              color: 'white'
+            }}>0.8</div>
+          </a>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ marginTop: '64px', marginBottom: '70px', padding: '20px 16px' }}>
-        {/* Character Grid */}
+      {/* Characters Grid */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: '12px 3.335px 20px',
+        WebkitOverflowScrolling: 'touch'
+      }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '16px',
-          maxWidth: '600px',
-          margin: '0 auto'
+          gridTemplateColumns: '186px 186px',
+          gap: 0,
+          columnGap: '3.335px',
+          rowGap: 0
         }}>
-          {characters.map((character, index) => (
+          {characters.map((character, idx) => (
             <div 
-              key={index}
+              key={idx}
+              onClick={() => selectCharacter(character.id)}
               style={{
+                width: '186px',
+                height: '257px',
                 position: 'relative',
-                aspectRatio: '3/4',
-                borderRadius: '12px',
                 overflow: 'hidden',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                marginBottom: 0,
+                transition: 'transform 0.2s ease'
               }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
               <img 
                 src={character.image}
@@ -107,123 +124,21 @@ export default function HomePage() {
               />
               <div style={{
                 position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '16px',
-                background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                color: 'white',
-                fontSize: '20px',
-                fontWeight: 600
+                bottom: '16px',
+                left: '20px',
+                right: '20px',
+                textAlign: 'center',
+                padding: '6px 0',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 500,
+                fontSize: '16px',
+                lineHeight: '21px',
+                color: 'white'
               }}>
                 {character.name}
               </div>
             </div>
           ))}
-        </div>
-
-        {/* FAQ Section */}
-        <div style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '8px 20px 0',
-          width: '338.67px'
-        }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '28px',
-            paddingTop: '40px'
-          }}>
-            {[
-              'What is PixelCrush AI?',
-              'Is PixelCrush AI legitimate and safe to use?',
-              'How will PixelCrush AI appear on my bank statements?',
-              'Can I customize my PixelCrush AI experience?',
-              'Who uses PixelCrush AI and for what purpose?',
-              'What is an AI Companion and can I create my own?',
-              'Can my AI Companion send images, video, or voice messages?',
-              'Can I roleplay with my AI Companion?'
-            ].map((question, index) => (
-              <div key={index} style={{
-                background: '#1a1a1a',
-                border: '1px solid #282828',
-                padding: '20px 12px',
-                cursor: 'pointer'
-              }}>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  lineHeight: '32px',
-                  color: 'white',
-                  margin: 0
-                }}>{question}</h3>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Content Section */}
-        <div style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '40.593px 32.593px 32.593px',
-          width: '338.67px',
-          background: '#1a1a1a',
-          border: '1px solid #282828'
-        }}>
-          <h2 style={{
-            fontSize: '22px',
-            fontWeight: 700,
-            lineHeight: '40px',
-            color: 'white',
-            marginBottom: '32px'
-          }}>PixelCrush Makes Every Conversation Feel Personal</h2>
-          <p style={{
-            fontSize: '14px',
-            fontWeight: 400,
-            lineHeight: '20px',
-            color: 'rgba(255,255,255,0.7)',
-            marginBottom: '32px'
-          }}>Whether you're seeking a light-hearted chat after work or a heartfelt dialogue when you're feeling low, PixelCrush AI is designed to make every interaction feel genuine.</p>
-        </div>
-
-        {/* Footer */}
-        <div style={{
-          background: 'black',
-          padding: '40px 20px',
-          maxWidth: '1280px',
-          margin: '0 auto'
-        }}>
-          <div style={{ marginBottom: '35px' }}>
-            <h4 style={{
-              fontSize: '14px',
-              fontWeight: 400,
-              lineHeight: '20px',
-              color: 'rgba(255,255,255,0.7)',
-              marginBottom: '20px'
-            }}>Legal & Support</h4>
-            <a href="/legal" style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: 500,
-              lineHeight: '20px',
-              color: 'white',
-              textDecoration: 'underline',
-              marginBottom: '20px'
-            }}>Terms and Policies</a>
-          </div>
-          
-          <div style={{
-            textAlign: 'center',
-            fontSize: '14px',
-            fontWeight: 500,
-            lineHeight: '24px',
-            color: 'rgba(255,255,255,0.7)',
-            padding: '0 16px'
-          }}>
-            © 2025 PixelCrush.ai. All Rights Reserved
-          </div>
         </div>
       </div>
 
@@ -233,113 +148,108 @@ export default function HomePage() {
         bottom: 0,
         left: 0,
         right: 0,
-        height: '70px',
+        maxWidth: '393px',
+        margin: '0 auto',
         background: '#131313',
         borderTop: '0.593px solid rgba(255,255,255,0.2)',
+        height: '70px',
         display: 'flex',
-        zIndex: 1000
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: '8px 12px 8px',
+        zIndex: 100
       }}>
         <a href="/" style={{
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '3px',
-          textDecoration: 'none'
+          textDecoration: 'none',
+          color: 'white',
+          gap: '4px'
         }}>
-          <img 
-            src="https://www.figma.com/api/mcp/asset/071a7c81-6402-4350-b1b0-ba26e6cab360" 
-            alt="Characters" 
-            style={{ width: '30px', height: '30px' }}
-          />
-          <span style={{
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9.5L12 3L21 9.5V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 22V12H15V22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
             fontSize: '10px',
-            background: 'linear-gradient(135deg, #FF1B6B, #A445ED, #00D4FF)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>Characters</span>
+            lineHeight: '15px'
+          }}>Home</div>
         </a>
-        
+
         <a href="/chat" style={{
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '3px',
-          textDecoration: 'none'
+          textDecoration: 'none',
+          color: 'rgba(255,255,255,0.7)',
+          gap: '4px'
         }}>
-          <img 
-            src="https://www.figma.com/api/mcp/asset/85aa9d89-f84b-416d-941e-9a3435fa544f" 
-            alt="Chat" 
-            style={{ width: '30px', height: '30px' }}
-          />
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>Chat</span>
+          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://www.figma.com/api/mcp/asset/6c92bf79-791c-4aa0-86ea-92a4bd2963d9" alt="Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Chat</div>
         </a>
-        
+
         <a href="/voice" style={{
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '3px',
-          textDecoration: 'none'
+          textDecoration: 'none',
+          color: 'rgba(255,255,255,0.7)',
+          gap: '4px'
         }}>
-          <img 
-            src="https://www.figma.com/api/mcp/asset/a67f4f29-9007-4f4c-9cb6-539cfd116dfb" 
-            alt="Voice" 
-            style={{ width: '30px', height: '30px' }}
-          />
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>Voice Call</span>
+          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://www.figma.com/api/mcp/asset/b84a345c-6523-432d-beb0-df74be777edc" alt="Voice Call" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Voice Call</div>
         </a>
-        
+
         <a href="/gallery" style={{
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '3px',
-          textDecoration: 'none'
+          textDecoration: 'none',
+          color: 'rgba(255,255,255,0.7)',
+          gap: '4px'
         }}>
-          <img 
-            src="https://www.figma.com/api/mcp/asset/52ffa327-17fa-4d67-9183-9a6523dc9d70" 
-            alt="Gallery" 
-            style={{ width: '30px', height: '30px' }}
-          />
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>Gallery</span>
+          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://www.figma.com/api/mcp/asset/789f6323-9b48-419c-a0b1-26f69bb5b3d0" alt="Gallery" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Gallery</div>
         </a>
-        
+
         <a href="/account" style={{
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '3px',
-          textDecoration: 'none'
+          textDecoration: 'none',
+          color: 'rgba(255,255,255,0.7)',
+          gap: '4px'
         }}>
-          <img 
-            src="https://www.figma.com/api/mcp/asset/571e2d66-db34-4abc-8050-e64b3838e379" 
-            alt="Account" 
-            style={{ width: '30px', height: '30px' }}
-          />
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>Account</span>
+          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://www.figma.com/api/mcp/asset/c9bfdd57-ef2c-41ab-8bc7-060adde3d152" alt="Account" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Account</div>
         </a>
       </div>
-
-      <style jsx>{`
-        .floating-emoji {
-          animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
-        }
-      `}</style>
     </div>
   );
 }
