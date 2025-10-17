@@ -412,8 +412,6 @@ export default function AccountPage() {
         bottom: 0,
         left: 0,
         right: 0,
-        maxWidth: '393px',
-        margin: '0 auto',
         background: '#131313',
         borderTop: '0.593px solid rgba(255,255,255,0.2)',
         height: '70px',

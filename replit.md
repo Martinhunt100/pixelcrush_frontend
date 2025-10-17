@@ -68,6 +68,13 @@ The project is configured to run on port 5000 to work properly in the Replit env
 - **FAQ Section**: Collapsible accordion for frequently asked questions
 
 ## Recent Changes
+- **October 17, 2025**: Footer width fix and standardization
+  - Fixed footer not spanning full page width on browser display by removing maxWidth: '393px' and margin: '0 auto' constraints
+  - Standardized header and footer across all 8 pages (home, chat-landing, chat, voice, tokens, subscribe, gallery, account)
+  - Header: Logo 25px from left, token box with 80% white border, sticky positioning, z-index 100
+  - Footer: Fixed positioning, 70px height, center alignment, "Gallery" navigation label maintained
+  - Footer now spans full viewport width on all pages
+
 - **October 16, 2025**: Homepage content updates
   - Updated homepage to match original HTML design exactly
   - Added all missing content sections (AI Boyfriend, chat/voice/image/video, AI relationships, subscription options, global support, user activities)
