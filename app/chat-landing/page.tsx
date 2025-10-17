@@ -84,7 +84,7 @@ export default function ChatLandingPage() {
             </div>
             <div className="token-display" onClick={handleOpenTokens}>
               <div className="token-icon">
-                <img src="https://www.figma.com/api/mcp/asset/896841e1-bd7c-4c52-bf10-68513b3a60fe" alt="Tokens" />
+                <img src="https://www.figma.com/api/mcp/asset/896841e1-bd7c-4c52-bf10-68513b3a60fe" alt="Tokens" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
               </div>
               <div className="token-amount">0.8</div>
             </div>
