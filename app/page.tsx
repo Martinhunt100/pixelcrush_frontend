@@ -72,7 +72,7 @@ export default function HomePage() {
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px',
+        padding: '0 8px 0 25px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
@@ -81,9 +81,7 @@ export default function HomePage() {
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          width: '100%',
-          paddingLeft: '25px',
-          paddingRight: '8px'
+          width: '100%'
         }}>
           <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
             <img 
