@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['*'],
+  devIndicators: {
+    appIsrStatus: false,
+  },
   async headers() {
     return [
       {
