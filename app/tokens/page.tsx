@@ -46,44 +46,52 @@ export default function TokensPage() {
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px',
-        position: 'fixed',
+        padding: '0 8px 0 25px',
+        position: 'sticky',
         top: 0,
-        left: 0,
-        right: 0,
-        maxWidth: '393px',
-        margin: '0 auto',
-        zIndex: 1000,
+        zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          width: '100%',
-          paddingLeft: '20px'
+          width: '100%'
         }}>
-          <div 
-            onClick={() => window.history.back()}
+          <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+            <img 
+              src="https://www.figma.com/api/mcp/asset/75bd6a91-1161-4217-a70b-3569d51184c9"
+              alt="PixelCrush.ai"
+              style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
+            />
+          </a>
+          <a 
+            href="/tokens"
             style={{
-              width: '32px',
-              height: '32px',
+              marginLeft: 'auto',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '12px',
-              cursor: 'pointer'
+              gap: '8px',
+              padding: '6.593px 16.593px',
+              border: '1px solid rgba(255,255,255,0.8)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              textDecoration: 'none'
             }}
           >
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ width: '20px', height: '20px', fill: 'white' }}>
-              <path d="M15 18l-6-6 6-6"/>
-            </svg>
-          </div>
-          <div style={{
-            fontWeight: 600,
-            fontSize: '18px',
-            lineHeight: '24px',
-            color: 'white'
-          }}>Buy Tokens</div>
+            <div style={{ width: '30px', height: '30px' }}>
+              <img 
+                src="https://www.figma.com/api/mcp/asset/896841e1-bd7c-4c52-bf10-68513b3a60fe"
+                alt="Tokens"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
+            <div style={{
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: '16px',
+              lineHeight: '24px',
+              color: 'rgba(255,255,255,0.8)'
+            }}>0.8</div>
+          </a>
         </div>
       </div>
 
@@ -287,33 +295,108 @@ export default function TokensPage() {
         margin: '0 auto',
         background: '#131313',
         borderTop: '0.593px solid rgba(255,255,255,0.2)',
-        height: '78px',
+        height: '70px',
         display: 'flex',
         justifyContent: 'space-around',
-        alignItems: 'flex-start',
-        padding: '8px 12px',
-        zIndex: 1000
+        alignItems: 'center',
+        padding: '8px 12px 8px',
+        zIndex: 100
       }}>
-        {[
-          { href: '/characters', icon: 'https://www.figma.com/api/mcp/asset/6e8a5d93-897f-4d7e-98c9-9a28d2cab5d0', label: 'Characters' },
-          { href: '/chat', icon: 'https://www.figma.com/api/mcp/asset/6c92bf79-791c-4aa0-86ea-92a4bd2963d9', label: 'Chat' },
-          { href: '/voice', icon: 'https://www.figma.com/api/mcp/asset/b84a345c-6523-432d-beb0-df74be777edc', label: 'Voice Call' },
-          { href: '/collection', icon: 'https://www.figma.com/api/mcp/asset/789f6323-9b48-419c-a0b1-26f69bb5b3d0', label: 'Collection' },
-          { href: '/account', icon: 'https://www.figma.com/api/mcp/asset/c9bfdd57-ef2c-41ab-8bc7-060adde3d152', label: 'Account' }
-        ].map((item, idx) => (
-          <a key={idx} href={item.href} style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textDecoration: 'none',
-            color: 'rgba(255,255,255,0.7)'
-          }}>
-            <div style={{ height: '44px', width: '30px', marginBottom: 0 }}>
-              <img src={item.icon} alt={item.label} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </div>
-            <div style={{ fontSize: '10px', lineHeight: '15px', marginTop: '-1px' }}>{item.label}</div>
-          </a>
-        ))}
+        <a href="/" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textDecoration: 'none',
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
+        }}>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9.5L12 3L21 9.5V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 22V12H15V22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Home</div>
+        </a>
+
+        <a href="/chat-landing" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textDecoration: 'none',
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
+        }}>
+          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://www.figma.com/api/mcp/asset/6c92bf79-791c-4aa0-86ea-92a4bd2963d9" alt="Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Chat</div>
+        </a>
+
+        <a href="/voice" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textDecoration: 'none',
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
+        }}>
+          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://www.figma.com/api/mcp/asset/b84a345c-6523-432d-beb0-df74be777edc" alt="Voice Call" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Voice Call</div>
+        </a>
+
+        <a href="/gallery" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textDecoration: 'none',
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
+        }}>
+          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://www.figma.com/api/mcp/asset/789f6323-9b48-419c-a0b1-26f69bb5b3d0" alt="Gallery" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Gallery</div>
+        </a>
+
+        <a href="/account" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textDecoration: 'none',
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
+        }}>
+          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://www.figma.com/api/mcp/asset/c9bfdd57-ef2c-41ab-8bc7-060adde3d152" alt="Account" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '10px',
+            lineHeight: '15px'
+          }}>Account</div>
+        </a>
       </div>
     </div>
   );

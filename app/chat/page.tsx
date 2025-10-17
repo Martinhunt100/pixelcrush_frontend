@@ -140,7 +140,7 @@ export default function ChatPage() {
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px',
+        padding: '0 8px 0 25px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
@@ -149,8 +149,7 @@ export default function ChatPage() {
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          width: '100%',
-          paddingLeft: '20px'
+          width: '100%'
         }}>
           <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
             <img 
@@ -167,11 +166,10 @@ export default function ChatPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '6.593px 16.593px',
-              border: '1px solid rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.8)',
               borderRadius: '8px',
               cursor: 'pointer',
-              textDecoration: 'none',
-              opacity: 0.6
+              textDecoration: 'none'
             }}
           >
             <div style={{ width: '30px', height: '30px' }}>
@@ -185,7 +183,7 @@ export default function ChatPage() {
               fontFamily: 'Poppins, sans-serif',
               fontSize: '16px',
               lineHeight: '24px',
-              color: 'white'
+              color: 'rgba(255,255,255,0.8)'
             }}>0.8</div>
           </a>
         </div>
@@ -447,12 +445,13 @@ export default function ChatPage() {
           flexDirection: 'column',
           alignItems: 'center',
           textDecoration: 'none',
-          color: 'rgba(255,255,255,0.7)',
-          gap: '4px'
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
         }}>
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 9.5L12 3L21 9.5V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9.5Z" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M9 22V12H15V22" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M3 9.5L12 3L21 9.5V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 22V12H15V22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <div style={{
             fontFamily: 'Poppins, sans-serif',
@@ -461,7 +460,7 @@ export default function ChatPage() {
           }}>Home</div>
         </a>
 
-        <a href="/chat" style={{
+        <a href="/chat-landing" style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -484,8 +483,9 @@ export default function ChatPage() {
           flexDirection: 'column',
           alignItems: 'center',
           textDecoration: 'none',
-          color: 'rgba(255,255,255,0.7)',
-          gap: '4px'
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="https://www.figma.com/api/mcp/asset/b84a345c-6523-432d-beb0-df74be777edc" alt="Voice Call" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -502,8 +502,9 @@ export default function ChatPage() {
           flexDirection: 'column',
           alignItems: 'center',
           textDecoration: 'none',
-          color: 'rgba(255,255,255,0.7)',
-          gap: '4px'
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="https://www.figma.com/api/mcp/asset/789f6323-9b48-419c-a0b1-26f69bb5b3d0" alt="Gallery" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -520,8 +521,9 @@ export default function ChatPage() {
           flexDirection: 'column',
           alignItems: 'center',
           textDecoration: 'none',
-          color: 'rgba(255,255,255,0.7)',
-          gap: '4px'
+          color: 'white',
+          gap: '4px',
+          opacity: 0.6
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src="https://www.figma.com/api/mcp/asset/c9bfdd57-ef2c-41ab-8bc7-060adde3d152" alt="Account" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
