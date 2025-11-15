@@ -1,9 +1,11 @@
 export interface Character {
-  id: string;
+  id: string | number;
+  character_name?: string;
   name: string;
-  age: number;
-  tagline: string;
-  profile_image_url: string;
+  age?: number;
+  occupation?: string;
+  tagline?: string;
+  profile_image_url?: string;
   personality?: string;
   scenario?: string;
   created_at?: string;

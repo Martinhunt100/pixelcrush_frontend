@@ -50,7 +50,13 @@ export async function getCharacters() {
     throw new Error(`Failed to fetch characters: ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Map character_name to name for consistency
+  return data.map((char: any) => ({
+    ...char,
+    name: char.character_name || char.name
+  }));
 }
 
 // Chat APIs
