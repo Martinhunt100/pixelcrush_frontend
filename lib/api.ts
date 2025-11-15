@@ -34,6 +34,25 @@ export const characterAPI = {
   getById: (id: string) => apiCall(`/api/characters/${id}`),
 };
 
+// Direct fetch for characters (for client components)
+export async function getCharacters() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+  const response = await fetch(`${API_URL}/api/characters`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store', // Disable caching for development
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch characters: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 // Chat APIs
 export const chatAPI = {
   getConversations: () => apiCall('/api/conversations'),
