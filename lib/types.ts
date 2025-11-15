@@ -11,6 +11,19 @@ export interface Character {
   created_at?: string;
 }
 
+// Raw character data from API (before mapping)
+export interface CharacterApiResponse {
+  id: string | number;
+  character_name: string;
+  age?: number;
+  occupation?: string;
+  tagline?: string;
+  profile_image_url?: string;
+  personality?: string;
+  scenario?: string;
+  created_at?: string;
+}
+
 export interface ApiResponse<T> {
   data: T;
   message?: string;

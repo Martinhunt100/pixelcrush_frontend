@@ -1,3 +1,5 @@
+import type { Character, CharacterApiResponse } from './types';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function apiCall(endpoint: string, options: RequestInit = {}) {
@@ -35,7 +37,7 @@ export const characterAPI = {
 };
 
 // Direct fetch for characters (for client components)
-export async function getCharacters() {
+export async function getCharacters(): Promise<Character[]> {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   const response = await fetch(`${API_URL}/api/characters`, {
@@ -50,12 +52,12 @@ export async function getCharacters() {
     throw new Error(`Failed to fetch characters: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data: CharacterApiResponse[] = await response.json();
 
   // Map character_name to name for consistency
-  return data.map((char: any) => ({
+  return data.map((char: CharacterApiResponse): Character => ({
     ...char,
-    name: char.character_name || char.name
+    name: char.character_name || char.character_name
   }));
 }
 
