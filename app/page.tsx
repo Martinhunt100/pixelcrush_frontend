@@ -172,7 +172,7 @@ export default function HomePage() {
                 onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >
                 <img
-                  src={character.profile_image_url || 'https://via.placeholder.com/400x600?text=' + (character.name || 'Character')}
+                  src={character.profile_image_url || ''}
                   alt={character.name || 'Character'}
                   style={{
                     width: '100%',
