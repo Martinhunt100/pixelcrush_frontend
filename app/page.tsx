@@ -172,7 +172,7 @@ export default function HomePage() {
                 onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >
                 <img
-                  src={character.profile_image_url || ''}
+                  src={character.avatar_url}
                   alt={character.name || 'Character'}
                   style={{
                     width: '100%',

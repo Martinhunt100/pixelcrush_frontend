@@ -5,7 +5,7 @@ export interface Character {
   age?: number;
   occupation?: string;
   tagline?: string;
-  profile_image_url?: string;
+  avatar_url?: string;
   personality?: string;
   scenario?: string;
   created_at?: string;
@@ -18,7 +18,7 @@ export interface CharacterApiResponse {
   age?: number;
   occupation?: string;
   tagline?: string;
-  profile_image_url?: string;
+  avatar_url?: string;
   personality?: string;
   scenario?: string;
   created_at?: string;
