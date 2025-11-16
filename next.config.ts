@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+// Force fresh build - clear cache (Nov 15, 2025)
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
