@@ -107,12 +107,12 @@ export const chatAPI = {
       body: JSON.stringify({ character_id: characterId }),
     });
   },
-  sendMessage: async (conversationId: string, message: string): Promise<{ ai_response: string, message: Message }> => {
+  sendMessage: async (conversationId: string, content: string): Promise<{ userMessage: Message, aiMessage: Message }> => {
     return apiCall('/api/chat/message', {
       method: 'POST',
       body: JSON.stringify({
         conversation_id: conversationId,
-        message: message,
+        content: content,
       }),
     });
   },

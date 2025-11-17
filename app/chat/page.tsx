@@ -69,22 +69,30 @@ function ChatPageContent() {
   };
 
   const handleSendMessage = async () => {
-    const message = messageInput.trim();
-    if (!message || !conversationId || sending) return;
+    const content = messageInput.trim();
+    if (!content || !conversationId || sending) return;
 
     setSending(true);
     setMessageInput('');
 
     try {
-      // Send message to backend
-      const response = await chatAPI.sendMessage(conversationId, message);
+      console.log('Sending message:', { conversationId, content });
 
-      // Reload messages to get the updated conversation
-      await loadMessages();
+      const response = await chatAPI.sendMessage(conversationId, content);
+
+      console.log('Message sent:', response);
+
+      // Add both user message and AI response to the messages
+      if (response.userMessage && response.aiMessage) {
+        setMessages(prev => [...prev, response.userMessage, response.aiMessage]);
+      } else {
+        // Fallback: reload messages if response format is unexpected
+        await loadMessages();
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message. Please try again.');
-      setMessageInput(message); // Restore message on error
+      setMessageInput(content); // Restore message on error
     } finally {
       setSending(false);
     }
