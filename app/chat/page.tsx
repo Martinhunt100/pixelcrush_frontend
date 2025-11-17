@@ -8,7 +8,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 
 function ChatPageContent() {
   const searchParams = useSearchParams();
-  const conversationId = searchParams.get('conversationId');
+  const conversationId = parseInt(searchParams.get('conversationId') || '0');
 
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -18,7 +18,7 @@ function ChatPageContent() {
 
   // Load messages when conversation ID is available
   useEffect(() => {
-    if (conversationId) {
+    if (conversationId && conversationId > 0) {
       loadMessages();
     }
   }, [conversationId]);
@@ -119,7 +119,7 @@ function ChatPageContent() {
     });
   };
 
-  if (!conversationId) {
+  if (!conversationId || conversationId === 0) {
     return (
       <div style={{
         fontFamily: 'Poppins, sans-serif',

@@ -101,13 +101,13 @@ export async function getCharacters(): Promise<Character[]> {
 
 // Chat APIs
 export const chatAPI = {
-  startConversation: async (characterId: string): Promise<Conversation> => {
+  startConversation: async (characterId: string | number): Promise<Conversation> => {
     return apiCall('/api/chat/start', {
       method: 'POST',
       body: JSON.stringify({ character_id: characterId }),
     });
   },
-  sendMessage: async (conversationId: string, content: string): Promise<{ userMessage: Message, aiMessage: Message }> => {
+  sendMessage: async (conversationId: number, content: string): Promise<{ userMessage: Message, aiMessage: Message }> => {
     return apiCall('/api/chat/message', {
       method: 'POST',
       body: JSON.stringify({
@@ -117,6 +117,6 @@ export const chatAPI = {
     });
   },
   getConversations: (): Promise<Conversation[]> => apiCall('/api/conversations'),
-  getMessages: (conversationId: string): Promise<Message[]> =>
+  getMessages: (conversationId: number): Promise<Message[]> =>
     apiCall(`/api/chat/${conversationId}/messages`),
 };
