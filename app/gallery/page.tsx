@@ -60,53 +60,47 @@ export default function GalleryPage() {
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px 0 25px',
+        justifyContent: 'space-between',
+        padding: '0 16px 0 25px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%'
-        }}>
-          <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
-            <img 
-              src="/icons/logo.png"
-              alt="PixelCrush.ai"
-              style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
+        <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+          <img
+            src="/icons/logo.png"
+            alt="PixelCrush.ai"
+            style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
+          />
+        </a>
+        <a
+          href="/tokens"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6.593px 16.593px',
+            border: '1px solid rgba(255,255,255,0.8)',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            textDecoration: 'none'
+          }}
+        >
+          <div style={{ width: '30px', height: '30px' }}>
+            <img
+              src="/icons/token-icon.png"
+              alt="Tokens"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
-          </a>
-          <a 
-            href="/tokens"
-            style={{
-              marginLeft: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6.593px 16.593px',
-              border: '1px solid rgba(255,255,255,0.8)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none'
-            }}
-          >
-            <div style={{ width: '30px', height: '30px' }}>
-              <img 
-                src="/icons/token-icon.png"
-                alt="Tokens"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-            </div>
-            <div style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '16px',
-              lineHeight: '24px',
-              color: 'rgba(255,255,255,0.8)'
-            }}>0.8</div>
-          </a>
-        </div>
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '16px',
+            lineHeight: '24px',
+            color: 'rgba(255,255,255,0.8)'
+          }}>0.8</div>
+        </a>
       </div>
 
       {/* Main Content */}
@@ -190,6 +184,7 @@ export default function GalleryPage() {
                     padding: '8px',
                     display: 'flex',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     gap: '4px',
                     fontSize: '12px'
                   }}>
@@ -242,6 +237,7 @@ export default function GalleryPage() {
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     justifyContent: 'center'
                   }}>
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ width: '12px', height: '12px', fill: 'white' }}>
@@ -280,6 +276,7 @@ export default function GalleryPage() {
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     gap: '12px',
                     padding: '12px'
                   }}>
@@ -333,6 +330,7 @@ export default function GalleryPage() {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
+        justifyContent: 'space-between',
                         gap: '6px',
                         background: 'none',
                         border: 'none',
@@ -351,6 +349,7 @@ export default function GalleryPage() {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
+        justifyContent: 'space-between',
                         gap: '6px',
                         background: 'none',
                         border: 'none',
@@ -384,6 +383,7 @@ export default function GalleryPage() {
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
+        justifyContent: 'space-between',
         padding: '8px 12px 8px',
         zIndex: 100
       }}>
@@ -391,6 +391,7 @@ export default function GalleryPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -411,6 +412,7 @@ export default function GalleryPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -430,6 +432,7 @@ export default function GalleryPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -449,6 +452,7 @@ export default function GalleryPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px'
@@ -467,6 +471,7 @@ export default function GalleryPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',

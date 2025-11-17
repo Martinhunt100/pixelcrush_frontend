@@ -91,18 +91,14 @@ export default function ChatLandingPage() {
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px 0 25px',
+        justifyContent: 'space-between',
+        padding: '0 16px 0 25px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%'
-        }}>
-          <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+<a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
             <img 
               src="/icons/logo.png"
               alt="PixelCrush.ai"
@@ -112,7 +108,6 @@ export default function ChatLandingPage() {
           <a 
             href="/tokens"
             style={{
-              marginLeft: 'auto',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
@@ -137,7 +132,6 @@ export default function ChatLandingPage() {
               color: 'rgba(255,255,255,0.8)'
             }}>0.8</div>
           </a>
-        </div>
       </div>
 
       {/* Main Content */}
@@ -153,6 +147,7 @@ export default function ChatLandingPage() {
           <div style={{
             display: 'flex',
             alignItems: 'center',
+        justifyContent: 'space-between',
             justifyContent: 'space-between',
             marginBottom: '24px'
           }}>
@@ -219,6 +214,7 @@ export default function ChatLandingPage() {
                     marginBottom: '12px',
                     display: 'flex',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     gap: '12px',
                     cursor: 'pointer',
                     transition: 'transform 0.2s ease',
@@ -292,6 +288,7 @@ export default function ChatLandingPage() {
                           transition: 'opacity 0.2s',
                           display: 'flex',
                           alignItems: 'center',
+        justifyContent: 'space-between',
                           justifyContent: 'center'
                         }}
                       >
@@ -313,6 +310,7 @@ export default function ChatLandingPage() {
                           transition: 'opacity 0.2s',
                           display: 'flex',
                           alignItems: 'center',
+        justifyContent: 'space-between',
                           justifyContent: 'center'
                         }}
                       >
@@ -335,6 +333,7 @@ export default function ChatLandingPage() {
                   marginBottom: '12px',
                   display: 'flex',
                   alignItems: 'center',
+        justifyContent: 'space-between',
                   gap: '12px',
                   cursor: 'pointer',
                   transition: 'transform 0.2s ease',
@@ -349,6 +348,7 @@ export default function ChatLandingPage() {
                   background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 50%, #4A90E2 100%)',
                   display: 'flex',
                   alignItems: 'center',
+        justifyContent: 'space-between',
                   justifyContent: 'center',
                   fontSize: '24px',
                   flexShrink: 0
@@ -391,6 +391,7 @@ export default function ChatLandingPage() {
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
+        justifyContent: 'space-between',
         padding: '8px 12px 8px',
         zIndex: 100
       }}>
@@ -398,6 +399,7 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
           gap: '4px',
@@ -418,6 +420,7 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px'
@@ -436,6 +439,7 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
           gap: '4px',
@@ -455,6 +459,7 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
           gap: '4px',
@@ -474,6 +479,7 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
           gap: '4px',

@@ -51,18 +51,14 @@ export default function SubscribePage() {
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px 0 25px',
+        justifyContent: 'space-between',
+        padding: '0 16px 0 25px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%'
-        }}>
-          <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+<a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
             <img 
               src="/icons/logo.png"
               alt="PixelCrush.ai"
@@ -72,7 +68,6 @@ export default function SubscribePage() {
           <a 
             href="/tokens"
             style={{
-              marginLeft: 'auto',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
@@ -97,7 +92,6 @@ export default function SubscribePage() {
               color: 'rgba(255,255,255,0.8)'
             }}>0.8</div>
           </a>
-        </div>
       </div>
 
       {/* Main Content */}
@@ -130,6 +124,7 @@ export default function SubscribePage() {
         <div style={{
           display: 'flex',
           alignItems: 'center',
+        justifyContent: 'space-between',
           justifyContent: 'center',
           gap: '12px',
           marginBottom: '32px',
@@ -491,6 +486,7 @@ export default function SubscribePage() {
           <div style={{
             display: 'flex',
             alignItems: 'center',
+        justifyContent: 'space-between',
             justifyContent: 'center',
             gap: '16px'
           }}>
@@ -513,6 +509,7 @@ export default function SubscribePage() {
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
+        justifyContent: 'space-between',
         padding: '8px 12px 8px',
         zIndex: 100
       }}>
@@ -520,6 +517,7 @@ export default function SubscribePage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -540,6 +538,7 @@ export default function SubscribePage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -559,6 +558,7 @@ export default function SubscribePage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -578,6 +578,7 @@ export default function SubscribePage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -597,6 +598,7 @@ export default function SubscribePage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',

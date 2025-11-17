@@ -83,18 +83,14 @@ export default function VoiceCallPage() {
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px 0 25px',
+        justifyContent: 'space-between',
+        padding: '0 16px 0 25px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%'
-        }}>
-          <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+<a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
             <img 
               src="/icons/logo.png"
               alt="PixelCrush.ai"
@@ -104,7 +100,6 @@ export default function VoiceCallPage() {
           <a 
             href="/tokens"
             style={{
-              marginLeft: 'auto',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
@@ -129,7 +124,6 @@ export default function VoiceCallPage() {
               color: 'rgba(255,255,255,0.8)'
             }}>0.8</div>
           </a>
-        </div>
       </div>
 
       {/* Main Content */}
@@ -199,6 +193,7 @@ export default function VoiceCallPage() {
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
+        justifyContent: 'space-between',
                   justifyContent: 'center',
                   gap: '6px',
                   fontSize: '13px',
@@ -233,6 +228,7 @@ export default function VoiceCallPage() {
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     boxShadow: '0px 4px 12px rgba(0,0,0,0.4)',
@@ -256,6 +252,7 @@ export default function VoiceCallPage() {
           <div style={{
             display: 'flex',
             alignItems: 'center',
+        justifyContent: 'space-between',
             justifyContent: 'space-between',
             marginBottom: '16px'
           }}>
@@ -286,6 +283,7 @@ export default function VoiceCallPage() {
                 padding: '12px',
                 display: 'flex',
                 alignItems: 'center',
+        justifyContent: 'space-between',
                 gap: '12px'
               }}>
                 <img 
@@ -313,6 +311,7 @@ export default function VoiceCallPage() {
                     color: 'rgba(255,255,255,0.6)',
                     display: 'flex',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     gap: '6px'
                   }}>
                     <svg 
@@ -351,6 +350,7 @@ export default function VoiceCallPage() {
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     flexShrink: 0
@@ -381,6 +381,7 @@ export default function VoiceCallPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           justifyContent: 'space-between',
           padding: '60px 20px 40px'
         }}>
@@ -425,7 +426,7 @@ export default function VoiceCallPage() {
             display: 'flex',
             flexDirection: 'column',
             gap: '40px',
-            alignItems: 'center'
+            alignItems: 'center',
           }}>
             <div style={{
               display: 'grid',
@@ -445,6 +446,7 @@ export default function VoiceCallPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     gap: '8px',
                     background: 'none',
                     border: 'none',
@@ -459,6 +461,7 @@ export default function VoiceCallPage() {
                     background: 'rgba(255,255,255,0.15)',
                     display: 'flex',
                     alignItems: 'center',
+        justifyContent: 'space-between',
                     justifyContent: 'center',
                     transition: 'transform 0.2s'
                   }}
@@ -488,6 +491,7 @@ export default function VoiceCallPage() {
                 border: 'none',
                 display: 'flex',
                 alignItems: 'center',
+        justifyContent: 'space-between',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 boxShadow: '0px 4px 16px rgba(255, 59, 84, 0.4)',
@@ -516,6 +520,7 @@ export default function VoiceCallPage() {
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
+        justifyContent: 'space-between',
         padding: '8px 12px 8px',
         zIndex: 100
       }}>
@@ -523,6 +528,7 @@ export default function VoiceCallPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -543,6 +549,7 @@ export default function VoiceCallPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -562,6 +569,7 @@ export default function VoiceCallPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px'
@@ -580,6 +588,7 @@ export default function VoiceCallPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',
@@ -599,6 +608,7 @@ export default function VoiceCallPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px',

@@ -49,53 +49,47 @@ export default function HomePage() {
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 8px 0 25px',
+        justifyContent: 'space-between',
+        padding: '0 16px 0 25px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%'
-        }}>
-          <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+        <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+          <img
+            src="/icons/logo.png"
+            alt="PixelCrush.ai"
+            style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
+          />
+        </a>
+        <a
+          href="/tokens"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6.593px 16.593px',
+            border: '1px solid rgba(255,255,255,0.8)',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            textDecoration: 'none'
+          }}
+        >
+          <div style={{ width: '30px', height: '30px' }}>
             <img
-              src="/icons/logo.png"
-              alt="PixelCrush.ai"
-              style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
+              src="/icons/token-icon.png"
+              alt="Tokens"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
-          </a>
-          <a 
-            href="/tokens"
-            style={{
-              marginLeft: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6.593px 16.593px',
-              border: '1px solid rgba(255,255,255,0.8)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none'
-            }}
-          >
-            <div style={{ width: '30px', height: '30px' }}>
-              <img
-                src="/icons/token-icon.png"
-                alt="Tokens"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-            </div>
-            <div style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '16px',
-              lineHeight: '24px',
-              color: 'rgba(255,255,255,0.8)'
-            }}>0.8</div>
-          </a>
-        </div>
+          </div>
+          <div style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '16px',
+            lineHeight: '24px',
+            color: 'rgba(255,255,255,0.8)'
+          }}>0.8</div>
+        </a>
       </div>
 
       {/* Characters Grid */}
