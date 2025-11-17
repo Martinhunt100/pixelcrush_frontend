@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -35,10 +36,20 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!ageConfirmed) {
+      setError('You must confirm that you are 18 years or older');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await register({ email, password, username: username || undefined });
+      await register({
+        email,
+        password,
+        username: username || undefined,
+        age_confirmed: ageConfirmed
+      });
       router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
@@ -196,7 +207,7 @@ export default function RegisterPage() {
           />
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '20px' }}>
           <label style={{
             display: 'block',
             fontSize: '14px',
@@ -225,6 +236,32 @@ export default function RegisterPage() {
               outline: 'none'
             }}
           />
+        </div>
+
+        {/* Age Confirmation Checkbox */}
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: 'rgba(255,255,255,0.9)'
+          }}>
+            <input
+              type="checkbox"
+              checked={ageConfirmed}
+              onChange={(e) => setAgeConfirmed(e.target.checked)}
+              required
+              style={{
+                width: '18px',
+                height: '18px',
+                cursor: 'pointer',
+                accentColor: '#FF3B9A'
+              }}
+            />
+            <span>I confirm I am 18 years or older</span>
+          </label>
         </div>
 
         <button

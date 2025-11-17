@@ -56,6 +56,7 @@ export interface RegisterCredentials {
   email: string;
   password: string;
   username?: string;
+  age_confirmed: boolean;
 }
 
 export interface Conversation {
