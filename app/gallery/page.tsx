@@ -73,7 +73,7 @@ export default function GalleryPage() {
         }}>
           <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
             <img 
-              src="https://www.figma.com/api/mcp/asset/75bd6a91-1161-4217-a70b-3569d51184c9"
+              src="/icons/logo.png"
               alt="PixelCrush.ai"
               style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
             />
@@ -94,7 +94,7 @@ export default function GalleryPage() {
           >
             <div style={{ width: '30px', height: '30px' }}>
               <img 
-                src="https://www.figma.com/api/mcp/asset/896841e1-bd7c-4c52-bf10-68513b3a60fe"
+                src="/icons/token-icon.png"
                 alt="Tokens"
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
@@ -417,7 +417,7 @@ export default function GalleryPage() {
           opacity: 0.6
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="https://www.figma.com/api/mcp/asset/6c92bf79-791c-4aa0-86ea-92a4bd2963d9" alt="Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/icons/nav-chat.png" alt="Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div style={{
             fontFamily: 'Poppins, sans-serif',
@@ -436,7 +436,7 @@ export default function GalleryPage() {
           opacity: 0.6
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="https://www.figma.com/api/mcp/asset/b84a345c-6523-432d-beb0-df74be777edc" alt="Voice Call" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/icons/nav-voice.png" alt="Voice Call" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div style={{
             fontFamily: 'Poppins, sans-serif',
@@ -454,7 +454,7 @@ export default function GalleryPage() {
           gap: '4px'
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="https://www.figma.com/api/mcp/asset/789f6323-9b48-419c-a0b1-26f69bb5b3d0" alt="Gallery" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/icons/nav-gallery.png" alt="Gallery" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div style={{
             fontFamily: 'Poppins, sans-serif',
@@ -473,7 +473,7 @@ export default function GalleryPage() {
           opacity: 0.6
         }}>
           <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="https://www.figma.com/api/mcp/asset/c9bfdd57-ef2c-41ab-8bc7-060adde3d152" alt="Account" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/icons/nav-account.png" alt="Account" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div style={{
             fontFamily: 'Poppins, sans-serif',
