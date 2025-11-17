@@ -28,10 +28,18 @@ function ChatPageContent() {
 
     try {
       setLoading(true);
-      const msgs = await chatAPI.getMessages(conversationId);
-      setMessages(msgs);
+      const response = await chatAPI.getMessages(conversationId);
+      console.log('Messages response:', response);
+
+      // Make sure we're setting an array
+      const messagesArray = Array.isArray(response) ? response :
+                           response.messages ? response.messages :
+                           [];
+
+      setMessages(messagesArray);
     } catch (error) {
       console.error('Failed to load messages:', error);
+      setMessages([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -223,7 +231,8 @@ function ChatPageContent() {
         )}
 
         {/* Messages */}
-        {!loading && messages.map((msg, idx) => (
+        {!loading && messages && messages.length > 0 ? (
+          messages.map((msg, idx) => (
           <div
             key={msg.id || idx}
             style={{
@@ -289,7 +298,20 @@ function ChatPageContent() {
               </div>
             </div>
           </div>
-        ))}
+          ))
+        ) : (
+          !loading && (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: 'rgba(255,255,255,0.5)',
+              fontFamily: 'Roboto, sans-serif',
+              fontSize: '14px'
+            }}>
+              No messages yet. Start the conversation!
+            </div>
+          )
+        )}
 
         {/* Sending indicator */}
         {sending && (
