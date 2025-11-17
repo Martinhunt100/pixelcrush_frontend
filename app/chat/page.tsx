@@ -1,51 +1,48 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { chatAPI } from '@/lib/api';
+import type { Message } from '@/lib/types';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
-export default function ChatPage() {
+function ChatPageContent() {
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get('conversationId');
+
   const [messageInput, setMessageInput] = useState('');
-  const [messages, setMessages] = useState([
-    {
-      type: 'ai',
-      hasVideo: true,
-      videoSrc: 'https://www.figma.com/api/mcp/asset/d2cdcb1a-9dea-44b7-9017-501904baf38d',
-      text: "Oi! Found yourself at the edge of polite society, have you? The bench is free, but fair warning - I'm studying psychology, so I'll be analyzing everything you say.",
-      time: '9:48AM',
-      hasVoice: true
-    },
-    {
-      type: 'user',
-      text: 'Send me a video of you',
-      time: '9:48AM'
-    },
-    {
-      type: 'ai',
-      hasImage: true,
-      imageSrc: 'https://www.figma.com/api/mcp/asset/f63c4a58-dc4a-49bf-a368-cfaf0d68f7bc',
-      text: 'Dare to explore my dark side? I promise it\'s worth the risk 🖤',
-      time: '9:49AM',
-      hasVoice: true
-    },
-    {
-      type: 'user',
-      text: 'How are you today lila',
-      time: '1:44PM'
-    },
-    {
-      type: 'ai',
-      text: 'Oh, you know... same old chaos. *winks* But now that you\'re here, things might get interesting. What brings you to this corner of madness?',
-      time: '1:44PM',
-      hasVoice: true,
-      hasTyping: true
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const messagesContainerRef = useRef(null);
+  // Load messages when conversation ID is available
+  useEffect(() => {
+    if (conversationId) {
+      loadMessages();
+    }
+  }, [conversationId]);
+
+  const loadMessages = async () => {
+    if (!conversationId) return;
+
+    try {
+      setLoading(true);
+      const msgs = await chatAPI.getMessages(conversationId);
+      setMessages(msgs);
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       setTimeout(() => {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
       }, 100);
     }
   };
@@ -63,52 +60,36 @@ export default function ChatPage() {
     return `${hours}:${minutes.toString().padStart(2, '0')}${ampm}`;
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     const message = messageInput.trim();
-    if (!message) return;
+    if (!message || !conversationId || sending) return;
 
-    const newMessage = {
-      type: 'user',
-      text: message,
-      time: getCurrentTime()
-    };
-
-    setMessages([...messages, newMessage]);
+    setSending(true);
     setMessageInput('');
 
-    setTimeout(() => {
-      addAIResponse();
-    }, 1500);
+    try {
+      // Send message to backend
+      const response = await chatAPI.sendMessage(conversationId, message);
+
+      // Reload messages to get the updated conversation
+      await loadMessages();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      alert('Failed to send message. Please try again.');
+      setMessageInput(message); // Restore message on error
+    } finally {
+      setSending(false);
+    }
   };
 
-  const addAIResponse = () => {
-    const responses = [
-      "*smirks* That's an interesting thought. Tell me more...",
-      "*leans in curiously* I like where this is going.",
-      "Fascinating... *studies you intently*",
-      "*grins mischievously* You're full of surprises.",
-      "Oh really? *raises an eyebrow* Go on..."
-    ];
-
-    const response = responses[Math.floor(Math.random() * responses.length)];
-
-    const newMessage = {
-      type: 'ai',
-      text: response,
-      time: getCurrentTime(),
-      hasVoice: true
-    };
-
-    setMessages(prev => [...prev, newMessage]);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const renderMessageText = (text) => {
+  const renderMessageText = (text: string) => {
     const parts = text.split(/(\*.*?\*)/g);
     return parts.map((part, idx) => {
       if (part.startsWith('*') && part.endsWith('*')) {
@@ -121,6 +102,23 @@ export default function ChatPage() {
       return <span key={idx}>{part}</span>;
     });
   };
+
+  if (!conversationId) {
+    return (
+      <div style={{
+        fontFamily: 'Poppins, sans-serif',
+        background: '#131313',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        fontSize: '16px'
+      }}>
+        No conversation selected
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -184,7 +182,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages Container */}
-      <div 
+      <div
         ref={messagesContainerRef}
         style={{
           flex: 1,
@@ -200,7 +198,7 @@ export default function ChatPage() {
           padding: '0 4px 4px',
           marginBottom: '16px'
         }}>
-          <img 
+          <img
             src="/icons/info-icon.png"
             alt="Info"
             style={{ width: '20px', height: '20px' }}
@@ -211,65 +209,39 @@ export default function ChatPage() {
             lineHeight: '15px',
             color: 'rgba(209, 209, 209, 0.79)'
           }}>Safe Chat Disclaimer</span>
-          <img 
-            src="https://www.figma.com/api/mcp/asset/2efe3242-335d-47e1-9fda-379b6af1d41d"
-            alt="Arrow"
-            style={{ width: '20px', height: '20px', opacity: 0.6 }}
-          />
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div style={{
+            textAlign: 'center',
+            padding: '20px',
+            color: 'rgba(255,255,255,0.5)'
+          }}>
+            Loading messages...
+          </div>
+        )}
+
         {/* Messages */}
-        {messages.map((msg, idx) => (
-          <div 
-            key={idx}
+        {!loading && messages.map((msg, idx) => (
+          <div
+            key={msg.id || idx}
             style={{
               marginBottom: '16px',
-              ...(msg.type === 'ai' ? { maxWidth: '273px' } : {
+              ...(msg.sender_type === 'ai' ? { maxWidth: '273px' } : {
                 display: 'flex',
                 justifyContent: 'flex-end',
                 marginTop: '24px'
               })
             }}
           >
-            <div style={{ maxWidth: msg.type === 'user' ? '273px' : '100%' }}>
-              {/* Video */}
-              {msg.hasVideo && (
-                <div style={{
-                  maxWidth: '166.67px',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  marginBottom: '6px'
-                }}>
-                  <img 
-                    src={msg.videoSrc}
-                    alt="Video"
-                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                  />
-                </div>
-              )}
-
-              {/* Image */}
-              {msg.hasImage && (
-                <div style={{
-                  maxWidth: '272.67px',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  marginBottom: '8px'
-                }}>
-                  <img 
-                    src={msg.imageSrc}
-                    alt="Image"
-                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                  />
-                </div>
-              )}
-
+            <div style={{ maxWidth: msg.sender_type === 'user' ? '273px' : '100%' }}>
               {/* Message Bubble */}
               <div style={{
                 padding: '8px 16px',
                 borderRadius: '24px',
                 marginBottom: '8px',
-                ...(msg.type === 'ai' ? {
+                ...(msg.sender_type === 'ai' ? {
                   background: '#fe3895',
                   color: '#202124',
                   borderBottomLeftRadius: '4px'
@@ -282,7 +254,7 @@ export default function ChatPage() {
                 fontSize: '16px',
                 lineHeight: '21px'
               }}>
-                {renderMessageText(msg.text)}
+                {renderMessageText(msg.content)}
               </div>
 
               {/* Message Footer */}
@@ -291,11 +263,11 @@ export default function ChatPage() {
                 alignItems: 'center',
                 gap: '8px',
                 marginTop: '4px',
-                ...(msg.type === 'user' && { justifyContent: 'flex-end' })
+                ...(msg.sender_type === 'user' && { justifyContent: 'flex-end' })
               }}>
-                {msg.hasVoice && msg.type === 'ai' && (
+                {msg.sender_type === 'ai' && (
                   <div style={{ width: '34px', height: '29px' }}>
-                    <img 
+                    <img
                       src="/icons/voice-play.png"
                       alt="Voice"
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
@@ -307,20 +279,39 @@ export default function ChatPage() {
                   fontSize: '13px',
                   lineHeight: '20px',
                   color: '#616162'
-                }}>{msg.time}</div>
-                {msg.hasTyping && (
-                  <div style={{ width: '14px', height: '4px' }}>
-                    <img 
-                      src="https://www.figma.com/api/mcp/asset/ac1dc25e-1c77-4c05-82f1-097fa1de51ba"
-                      alt="Typing"
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </div>
-                )}
+                }}>
+                  {new Date(msg.created_at).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </div>
               </div>
             </div>
           </div>
         ))}
+
+        {/* Sending indicator */}
+        {sending && (
+          <div style={{
+            maxWidth: '273px',
+            marginBottom: '16px'
+          }}>
+            <div style={{
+              padding: '8px 16px',
+              borderRadius: '24px',
+              background: '#fe3895',
+              color: '#202124',
+              borderBottomLeftRadius: '4px',
+              fontFamily: 'Roboto, sans-serif',
+              fontSize: '16px',
+              lineHeight: '21px',
+              fontStyle: 'italic'
+            }}>
+              Typing...
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input Area */}
@@ -341,8 +332,8 @@ export default function ChatPage() {
           alignItems: 'center',
           gap: '12px'
         }}>
-          <button 
-            onClick={() => alert('📷 Image attachment - will integrate with your backend API')}
+          <button
+            onClick={() => alert('📷 Image attachment - Coming soon!')}
             style={{
               width: '40px',
               height: '31px',
@@ -352,14 +343,14 @@ export default function ChatPage() {
               cursor: 'pointer'
             }}
           >
-            <img 
+            <img
               src="/icons/photo-attach.png"
               alt="Photo"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </button>
-          <button 
-            onClick={() => alert('🎥 Video attachment - will integrate with your backend API')}
+          <button
+            onClick={() => alert('🎥 Video attachment - Coming soon!')}
             style={{
               width: '40px',
               height: '31px',
@@ -370,17 +361,18 @@ export default function ChatPage() {
               transform: 'scaleY(-1)'
             }}
           >
-            <img 
+            <img
               src="/icons/video-attach.png"
               alt="Video"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </button>
-          <input 
+          <input
             type="text"
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyPress={handleKeyPress}
+            disabled={sending}
             placeholder="Type message..."
             style={{
               flex: 1,
@@ -392,18 +384,20 @@ export default function ChatPage() {
               outline: 'none'
             }}
           />
-          <button 
+          <button
             onClick={handleSendMessage}
+            disabled={sending || !messageInput.trim()}
             style={{
               width: '35px',
               height: '35px',
               background: 'none',
               border: 'none',
               padding: 0,
-              cursor: 'pointer'
+              cursor: sending || !messageInput.trim() ? 'not-allowed' : 'pointer',
+              opacity: sending || !messageInput.trim() ? 0.5 : 1
             }}
           >
-            <img 
+            <img
               src="/icons/send-button.png"
               alt="Send"
               style={{
@@ -535,5 +529,13 @@ export default function ChatPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <ProtectedRoute>
+      <ChatPageContent />
+    </ProtectedRoute>
   );
 }

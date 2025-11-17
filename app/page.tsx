@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCharacters } from '@/lib/api';
+import { getCharacters, chatAPI } from '@/lib/api';
 import type { Character } from '@/lib/types';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useRouter } from 'next/navigation';
 
-export default function HomePage() {
+function HomePageContent() {
+  const router = useRouter();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,8 +30,16 @@ export default function HomePage() {
     fetchCharacters();
   }, []);
 
-  const selectCharacter = (characterId: string | number) => {
-    window.location.href = `/chat-landing?characterId=${characterId}`;
+  const selectCharacter = async (characterId: string | number) => {
+    try {
+      // Start conversation with the selected character
+      const conversation = await chatAPI.startConversation(String(characterId));
+      // Navigate to chat page with conversation ID
+      router.push(`/chat?conversationId=${conversation.id}&characterId=${characterId}`);
+    } catch (error) {
+      console.error('Failed to start conversation:', error);
+      alert('Failed to start conversation. Please try again.');
+    }
   };
 
   return (
@@ -317,5 +328,13 @@ export default function HomePage() {
         </a>
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <ProtectedRoute>
+      <HomePageContent />
+    </ProtectedRoute>
   );
 }

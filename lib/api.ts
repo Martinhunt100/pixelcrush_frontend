@@ -1,29 +1,61 @@
-import type { Character, CharacterApiResponse } from './types';
+import type {
+  Character,
+  CharacterApiResponse,
+  AuthResponse,
+  LoginCredentials,
+  RegisterCredentials,
+  User,
+  Conversation,
+  Message
+} from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
 
 export async function apiCall(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('auth_token');
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+    const errorData = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(errorData.error || errorData.message || `API Error: ${response.statusText}`);
   }
 
   return response.json();
 }
 
+// Auth APIs
+export const authAPI = {
+  register: async (credentials: RegisterCredentials): Promise<AuthResponse> => {
+    return apiCall('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+    return apiCall('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+  logout: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+    }
+  },
+};
+
 // User APIs
 export const userAPI = {
-  getProfile: () => apiCall('/api/users/profile'),
+  getProfile: (): Promise<User> => apiCall('/api/users/profile'),
   updateTokens: (amount: number) => apiCall('/api/users/tokens', {
     method: 'POST',
     body: JSON.stringify({ amount }),
@@ -63,10 +95,22 @@ export async function getCharacters(): Promise<Character[]> {
 
 // Chat APIs
 export const chatAPI = {
-  getConversations: () => apiCall('/api/conversations'),
-  sendMessage: (conversationId: string, message: string) => 
-    apiCall(`/api/conversations/${conversationId}/messages`, {
+  startConversation: async (characterId: string): Promise<Conversation> => {
+    return apiCall('/api/chat/start', {
       method: 'POST',
-      body: JSON.stringify({ message }),
-    }),
+      body: JSON.stringify({ character_id: characterId }),
+    });
+  },
+  sendMessage: async (conversationId: string, message: string): Promise<{ ai_response: string, message: Message }> => {
+    return apiCall('/api/chat/message', {
+      method: 'POST',
+      body: JSON.stringify({
+        conversation_id: conversationId,
+        message: message,
+      }),
+    });
+  },
+  getConversations: (): Promise<Conversation[]> => apiCall('/api/conversations'),
+  getMessages: (conversationId: string): Promise<Message[]> =>
+    apiCall(`/api/conversations/${conversationId}/messages`),
 };
