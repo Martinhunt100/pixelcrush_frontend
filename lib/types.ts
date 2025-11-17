@@ -61,6 +61,7 @@ export interface RegisterCredentials {
 
 export interface Conversation {
   id: string;
+  conversation_id?: string; // Backend may return this field
   character_id: string;
   user_id: string;
   created_at: string;

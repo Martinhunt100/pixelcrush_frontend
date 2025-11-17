@@ -32,10 +32,12 @@ function HomePageContent() {
 
   const selectCharacter = async (characterId: string | number) => {
     try {
-      // Start conversation with the selected character
-      const conversation = await chatAPI.startConversation(String(characterId));
-      // Navigate to chat page with conversation ID
-      router.push(`/chat?conversationId=${conversation.id}&characterId=${characterId}`);
+      console.log('Starting conversation with character:', characterId);
+      const response = await chatAPI.startConversation(String(characterId));
+      console.log('Conversation created:', response);
+
+      // Navigate to chat with the conversation_id
+      router.push(`/chat?conversationId=${response.conversation_id || response.id}`);
     } catch (error) {
       console.error('Failed to start conversation:', error);
       alert('Failed to start conversation. Please try again.');

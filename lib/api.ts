@@ -118,5 +118,5 @@ export const chatAPI = {
   },
   getConversations: (): Promise<Conversation[]> => apiCall('/api/conversations'),
   getMessages: (conversationId: string): Promise<Message[]> =>
-    apiCall(`/api/conversations/${conversationId}/messages`),
+    apiCall(`/api/chat/${conversationId}/messages`),
 };
