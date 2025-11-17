@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check if user is logged in on mount
     const initAuth = async () => {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
 
       if (token && storedUser) {
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error('Auth initialization error:', error);
           // Clear invalid token
-          localStorage.removeItem('auth_token');
+          localStorage.removeItem('token');
           localStorage.removeItem('user');
           setUser(null);
         }
@@ -49,9 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await authAPI.login(credentials);
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      setUser(response.user);
+      const { token, user } = response;
+
+      // CRITICAL: Store token in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      setUser(user);
     } catch (error) {
       throw error;
     }
@@ -60,16 +64,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (credentials: RegisterCredentials) => {
     try {
       const response = await authAPI.register(credentials);
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      setUser(response.user);
+      const { token, user } = response;
+
+      // CRITICAL: Store token in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      setUser(user);
     } catch (error) {
       throw error;
     }
   };
 
   const logout = () => {
-    authAPI.logout();
+    // Remove token from localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
     setUser(null);
   };
 
