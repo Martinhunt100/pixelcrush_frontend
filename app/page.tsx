@@ -36,8 +36,8 @@ function HomePageContent() {
       const response = await chatAPI.startConversation(String(characterId));
       console.log('Conversation created:', response);
 
-      // Navigate to chat with the conversation_id
-      router.push(`/chat?conversationId=${response.conversation_id || response.id}`);
+      // Navigate to chat with the conversation_id and characterId
+      router.push(`/chat?conversationId=${response.conversation_id || response.id}&characterId=${characterId}`);
     } catch (error) {
       console.error('Failed to start conversation:', error);
       alert('Failed to start conversation. Please try again.');

@@ -2,19 +2,35 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { chatAPI } from '@/lib/api';
-import type { Message } from '@/lib/types';
+import { chatAPI, characterAPI } from '@/lib/api';
+import type { Message, Character } from '@/lib/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 function ChatPageContent() {
   const searchParams = useSearchParams();
   const conversationId = parseInt(searchParams.get('conversationId') || '0');
+  const characterId = searchParams.get('characterId');
 
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load character details
+  useEffect(() => {
+    const loadCharacter = async () => {
+      if (!characterId) return;
+      try {
+        const characterData = await characterAPI.getById(characterId);
+        setCharacter(characterData);
+      } catch (error) {
+        console.error('Failed to load character:', error);
+      }
+    };
+    loadCharacter();
+  }, [characterId]);
 
   // Load messages when conversation ID is available
   useEffect(() => {
@@ -196,6 +212,65 @@ function ChatPageContent() {
           }}>0.8</div>
         </a>
       </div>
+
+      {/* Character Info Bar */}
+      {character && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(255,59,154,0.1) 0%, rgba(164,69,237,0.1) 50%, rgba(74,144,226,0.1) 100%)',
+          borderBottom: '1px solid rgba(255,59,154,0.2)',
+          padding: '12px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          position: 'sticky',
+          top: '64px',
+          zIndex: 99,
+          transition: 'all 0.3s ease'
+        }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '2px solid #FF3B9A',
+            flexShrink: 0
+          }}>
+            <img
+              src={character.avatar_url}
+              alt={character.name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: '16px',
+              fontWeight: 600,
+              color: 'white',
+              marginBottom: '2px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {character.name}
+            </div>
+            <div style={{
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.7)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {character.age && character.occupation ? `${character.age} • ${character.occupation}` : character.tagline || 'Online'}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages Container */}
       <div
