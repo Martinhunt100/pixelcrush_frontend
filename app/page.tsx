@@ -11,6 +11,7 @@ function HomePageContent() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startingConversation, setStartingConversation] = useState(false);
 
   useEffect(() => {
     async function fetchCharacters() {
@@ -31,7 +32,10 @@ function HomePageContent() {
   }, []);
 
   const selectCharacter = async (characterId: string | number) => {
+    if (startingConversation) return;
+
     try {
+      setStartingConversation(true);
       console.log('Starting conversation with character:', characterId);
       const response = await chatAPI.startConversation(String(characterId));
       console.log('Conversation created:', response);
@@ -41,6 +45,7 @@ function HomePageContent() {
     } catch (error) {
       console.error('Failed to start conversation:', error);
       alert('Failed to start conversation. Please try again.');
+      setStartingConversation(false);
     }
   };
 
@@ -114,15 +119,47 @@ function HomePageContent() {
       }}>
         {loading ? (
           <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '400px',
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: '16px',
-            color: 'rgba(255,255,255,0.7)'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 0
           }}>
-            Loading characters...
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                style={{
+                  width: '100%',
+                  aspectRatio: '186/257',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'shimmer 1.5s infinite',
+                  borderRight: i % 2 === 0 ? '0.5px solid rgba(255,255,255,0.05)' : 'none',
+                  borderBottom: '0.5px solid rgba(255,255,255,0.05)'
+                }}
+              >
+                <div style={{
+                  position: 'absolute',
+                  bottom: 16,
+                  left: 16,
+                  right: 16
+                }}>
+                  <div style={{
+                    width: '60%',
+                    height: '16px',
+                    background: 'rgba(255,255,255,0.1)',
+                    borderRadius: '4px',
+                    marginBottom: '8px'
+                  }} />
+                  <div style={{
+                    width: '40%',
+                    height: '12px',
+                    background: 'rgba(255,255,255,0.08)',
+                    borderRadius: '4px'
+                  }} />
+                </div>
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div style={{
@@ -329,6 +366,53 @@ function HomePageContent() {
           }}>Account</div>
         </a>
       </div>
+
+      {/* Loading Overlay */}
+      {startingConversation && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid rgba(255,59,154,0.2)',
+            borderTop: '4px solid #FF3B9A',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <p style={{
+            marginTop: '20px',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '16px',
+            color: 'white',
+            fontWeight: 500
+          }}>
+            Starting conversation...
+          </p>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

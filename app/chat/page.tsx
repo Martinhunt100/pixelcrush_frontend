@@ -214,62 +214,105 @@ function ChatPageContent() {
       </div>
 
       {/* Character Info Bar */}
-      {character && (
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(255,59,154,0.1) 0%, rgba(164,69,237,0.1) 50%, rgba(74,144,226,0.1) 100%)',
-          borderBottom: '1px solid rgba(255,59,154,0.2)',
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          position: 'sticky',
-          top: '64px',
-          zIndex: 99,
-          transition: 'all 0.3s ease'
-        }}>
+      {characterId && (
+        character ? (
           <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            overflow: 'hidden',
-            border: '2px solid #FF3B9A',
-            flexShrink: 0
+            background: 'linear-gradient(135deg, rgba(255,59,154,0.1) 0%, rgba(164,69,237,0.1) 50%, rgba(74,144,226,0.1) 100%)',
+            borderBottom: '1px solid rgba(255,59,154,0.2)',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            position: 'sticky',
+            top: '64px',
+            zIndex: 99,
+            transition: 'all 0.3s ease'
           }}>
-            <img
-              src={character.avatar_url}
-              alt={character.name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '16px',
-              fontWeight: 600,
-              color: 'white',
-              marginBottom: '2px',
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
+              border: '2px solid #FF3B9A',
+              flexShrink: 0
             }}>
-              {character.name}
+              <img
+                src={character.avatar_url}
+                alt={character.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
             </div>
-            <div style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '12px',
-              color: 'rgba(255,255,255,0.7)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              {character.age && character.occupation ? `${character.age} • ${character.occupation}` : character.tagline || 'Online'}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: '16px',
+                fontWeight: 600,
+                color: 'white',
+                marginBottom: '2px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>
+                {character.name}
+              </div>
+              <div style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.7)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>
+                {character.age && character.occupation ? `${character.age} • ${character.occupation}` : character.tagline || 'Online'}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div style={{
+            background: 'rgba(255,255,255,0.02)',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            position: 'sticky',
+            top: '64px',
+            zIndex: 99
+          }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s infinite',
+              flexShrink: 0
+            }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                width: '50%',
+                height: '16px',
+                background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s infinite',
+                borderRadius: '4px',
+                marginBottom: '8px'
+              }} />
+              <div style={{
+                width: '35%',
+                height: '12px',
+                background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s infinite',
+                borderRadius: '4px'
+              }} />
+            </div>
+          </div>
+        )
       )}
 
       {/* Messages Container */}
@@ -631,6 +674,10 @@ function ChatPageContent() {
         input::placeholder {
           color: white;
           opacity: 0.7;
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
         }
       `}</style>
     </div>
