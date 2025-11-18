@@ -26,6 +26,7 @@ function ChatPageContent() {
   // Example: setRemainingMessages(response.remaining_messages)
   const [remainingMessages, setRemainingMessages] = useState<number | null>(null); // null = hidden, number = shows counter
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load character details
@@ -62,12 +63,31 @@ function ChatPageContent() {
                            response.messages ? response.messages :
                            [];
 
+      // DEBUG: Log message order before sorting
+      console.log('📨 Messages from API (before sort):', messagesArray.map((m, i) => ({
+        index: i,
+        sender: m.sender_type,
+        content: m.content.substring(0, 20),
+        timestamp: m.created_at
+      })));
+
       // Sort messages by timestamp to ensure correct order (oldest first)
       const sortedMessages = messagesArray.sort((a: Message, b: Message) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
 
+      // DEBUG: Log message order after sorting
+      console.log('✅ Messages after sort:', sortedMessages.map((m, i) => ({
+        index: i,
+        sender: m.sender_type,
+        content: m.content.substring(0, 20),
+        timestamp: m.created_at
+      })));
+
       setMessages(sortedMessages);
+
+      // Scroll to bottom after loading messages (instant, no animation on first load)
+      setTimeout(() => scrollToBottom('auto'), 100);
     } catch (error) {
       console.error('Failed to load messages:', error);
       setMessages([]); // Set empty array on error
@@ -76,14 +96,9 @@ function ChatPageContent() {
     }
   };
 
-  const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-      }, 100);
-    }
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    // Use scrollIntoView for more reliable scrolling
+    messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
   };
 
   useEffect(() => {
@@ -139,17 +154,48 @@ function ChatPageContent() {
 
       // Add both user message and AI response to the messages
       if (response.userMessage && response.aiMessage) {
-        // Sort new messages by timestamp before adding
-        const newMessages = [response.userMessage, response.aiMessage].sort((a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
+        // FORCE correct order: user message first, then AI reply
+        // This ensures proper order even if backend timestamps are wrong
+        const userMsg = response.userMessage;
+        const aiMsg = response.aiMessage;
+
+        // DEBUG: Log received messages
+        console.log('📨 Received from API:', {
+          userMsg: { sender: userMsg.sender_type, content: userMsg.content.substring(0, 20), time: userMsg.created_at },
+          aiMsg: { sender: aiMsg.sender_type, content: aiMsg.content.substring(0, 20), time: aiMsg.created_at }
+        });
+
+        // Ensure user message always has earlier timestamp than AI message
+        const userTime = new Date(userMsg.created_at).getTime();
+        const aiTime = new Date(aiMsg.created_at).getTime();
+
+        if (aiTime <= userTime) {
+          // Backend bug: AI timestamp is earlier/same - force correct order
+          console.warn('⚠️ Backend timestamp issue detected - forcing correct order');
+          console.warn(`   User time: ${userMsg.created_at}, AI time: ${aiMsg.created_at}`);
+          aiMsg.created_at = new Date(userTime + 1000).toISOString(); // AI 1 second after user
+          console.warn(`   Fixed AI time to: ${aiMsg.created_at}`);
+        }
+
         setMessages(prev => {
-          const combined = [...prev, ...newMessages];
-          // Re-sort all messages to ensure correct order
-          return combined.sort((a, b) =>
+          const combined = [...prev, userMsg, aiMsg];
+          // Sort all messages by timestamp (now guaranteed correct)
+          const sorted = combined.sort((a, b) =>
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
+
+          // DEBUG: Log final order
+          console.log('✅ Final message order:', sorted.slice(-5).map((m, i) => ({
+            index: sorted.length - 5 + i,
+            sender: m.sender_type,
+            content: m.content.substring(0, 20)
+          })));
+
+          return sorted;
         });
+
+        // Scroll to bottom immediately after adding messages
+        setTimeout(() => scrollToBottom('smooth'), 100);
       } else {
         // Fallback: reload messages if response format is unexpected
         await loadMessages();
@@ -415,7 +461,7 @@ function ChatPageContent() {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '20px 16px 90px'
+          padding: '20px 16px 140px' // Increased bottom padding to prevent last message being hidden
         }}
       >
         {/* Disclaimer */}
@@ -636,6 +682,9 @@ function ChatPageContent() {
             </div>
           </div>
         )}
+
+        {/* Scroll anchor - invisible div to scroll to bottom */}
+        <div ref={messagesEndRef} style={{ height: '1px' }} />
       </div>
 
       {/* Input Area */}
