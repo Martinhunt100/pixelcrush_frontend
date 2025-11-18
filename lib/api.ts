@@ -24,17 +24,43 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(errorData.error || errorData.message || `API Error: ${response.statusText}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: response.statusText }));
+
+      // Provide user-friendly error messages
+      let errorMessage = errorData.error || errorData.message;
+
+      if (response.status === 401) {
+        errorMessage = 'Session expired. Please log in again.';
+      } else if (response.status === 403) {
+        errorMessage = 'Access denied. Please check your permissions.';
+      } else if (response.status === 404) {
+        errorMessage = 'The requested resource was not found.';
+      } else if (response.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      } else if (response.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (!errorMessage) {
+        errorMessage = `Something went wrong (${response.status})`;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  } catch (error) {
+    // Handle network errors
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Network error. Please check your internet connection.');
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 // Auth APIs

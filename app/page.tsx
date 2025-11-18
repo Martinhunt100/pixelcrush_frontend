@@ -168,30 +168,66 @@ function HomePageContent() {
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '400px',
-            padding: '20px',
+            padding: '40px 20px',
             fontFamily: 'Poppins, sans-serif'
           }}>
             <div style={{
-              fontSize: '16px',
-              color: '#ff3b9a',
-              marginBottom: '12px'
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'rgba(255,59,154,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '24px'
+            }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="#FF3B9A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div style={{
+              fontSize: '18px',
+              fontWeight: 600,
+              color: 'white',
+              marginBottom: '8px',
+              textAlign: 'center'
+            }}>
+              Oops! Something went wrong
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: 'rgba(255,255,255,0.7)',
+              marginBottom: '24px',
+              textAlign: 'center',
+              maxWidth: '300px',
+              lineHeight: '1.5'
             }}>
               {error}
             </div>
             <button
               onClick={() => window.location.reload()}
               style={{
-                padding: '10px 24px',
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.2)',
+                padding: '12px 28px',
+                background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
+                border: 'none',
                 borderRadius: '8px',
                 color: 'white',
                 cursor: 'pointer',
                 fontSize: '14px',
-                fontFamily: 'Poppins, sans-serif'
+                fontWeight: 600,
+                fontFamily: 'Poppins, sans-serif',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 59, 154, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              Retry
+              Try Again
             </button>
           </div>
         ) : (
