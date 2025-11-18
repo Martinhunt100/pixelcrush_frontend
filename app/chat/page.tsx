@@ -270,6 +270,28 @@ function ChatPageContent() {
                 {character.age && character.occupation ? `${character.age} • ${character.occupation}` : character.tagline || 'Online'}
               </div>
             </div>
+            {/* Message Counter */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              background: 'rgba(0,0,0,0.3)',
+              borderRadius: '20px',
+              flexShrink: 0
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#FF3B9A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'white'
+              }}>
+                {messages.length}
+              </span>
+            </div>
           </div>
         ) : (
           <div style={{
