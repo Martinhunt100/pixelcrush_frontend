@@ -24,6 +24,19 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // DIAGNOSTIC LOGGING
+  const fullUrl = `${API_URL}${endpoint}`;
+  const method = options.method || 'GET';
+  const maskedToken = token ? `Bearer ${token.substring(0, 10)}...${token.substring(token.length - 5)}` : 'NO TOKEN';
+
+  console.group(`🔍 API Request: ${method} ${endpoint}`);
+  console.log('📍 Full URL:', fullUrl);
+  console.log('🔑 Authorization:', maskedToken);
+  console.log('📦 Request Body:', options.body || 'No body');
+  console.log('🔧 Method:', method);
+  console.log('📋 Headers:', { ...headers, Authorization: maskedToken });
+  console.groupEnd();
+
   try {
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
@@ -32,6 +45,15 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: response.statusText }));
+
+      // DIAGNOSTIC LOGGING FOR ERRORS
+      console.group(`❌ API Error: ${response.status} ${method} ${endpoint}`);
+      console.log('📍 URL:', fullUrl);
+      console.log('🔢 Status Code:', response.status);
+      console.log('📄 Status Text:', response.statusText);
+      console.log('📦 Error Data:', errorData);
+      console.log('🔑 Had Token:', token ? 'YES' : 'NO');
+      console.groupEnd();
 
       // Provide user-friendly error messages
       let errorMessage = errorData.error || errorData.message;
@@ -52,6 +74,9 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
 
       throw new Error(errorMessage);
     }
+
+    // DIAGNOSTIC LOGGING FOR SUCCESS
+    console.log(`✅ API Success: ${method} ${endpoint} (${response.status})`);
 
     return response.json();
   } catch (error) {
