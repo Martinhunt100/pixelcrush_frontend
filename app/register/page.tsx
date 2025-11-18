@@ -194,6 +194,7 @@ export default function RegisterPage() {
             required
             placeholder="••••••••"
             minLength={6}
+            autoComplete="new-password"
             style={{
               width: '100%',
               padding: '12px 16px',
@@ -225,6 +226,7 @@ export default function RegisterPage() {
             required
             placeholder="••••••••"
             minLength={6}
+            autoComplete="new-password"
             style={{
               width: '100%',
               padding: '12px 16px',
