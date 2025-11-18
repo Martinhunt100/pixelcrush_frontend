@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { chatAPI, characterAPI } from '@/lib/api';
 import type { Message, Character } from '@/lib/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import UpgradeModal from '@/components/UpgradeModal';
 
 function ChatPageContent() {
   const searchParams = useSearchParams();
@@ -19,6 +20,11 @@ function ChatPageContent() {
   const [sendTimestamp, setSendTimestamp] = useState<number | null>(null);
   const [showTimeout, setShowTimeout] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>('');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  // TODO: Set remainingMessages from backend response when available
+  // Backend should return { remaining_messages: number } in chat API responses
+  // Example: setRemainingMessages(response.remaining_messages)
+  const [remainingMessages, setRemainingMessages] = useState<number | null>(null); // null = hidden, number = shows counter
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -153,7 +159,17 @@ function ChatPageContent() {
       // Clear timeout on error
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setSendTimestamp(null);
-      setShowTimeout(true); // Show timeout UI on error
+
+      // Check if this is a message limit error (403)
+      const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
+      if (errorMessage.includes('access denied') || errorMessage.includes('permission')) {
+        // Show upgrade modal for message limit errors
+        setShowUpgradeModal(true);
+        setMessageInput(content); // Restore message so user can see what they tried to send
+      } else {
+        // Show timeout UI for other errors
+        setShowTimeout(true);
+      }
     } finally {
       setSending(false);
     }
@@ -322,28 +338,32 @@ function ChatPageContent() {
                 {character.age && character.occupation ? `${character.age} • ${character.occupation}` : character.tagline || 'Online'}
               </div>
             </div>
-            {/* Message Counter */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              background: 'rgba(0,0,0,0.3)',
-              borderRadius: '20px',
-              flexShrink: 0
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#FF3B9A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'white'
+            {/* Message Limit Counter */}
+            {remainingMessages !== null && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                background: remainingMessages <= 3 ? 'rgba(255,59,154,0.2)' : 'rgba(0,0,0,0.3)',
+                border: remainingMessages <= 3 ? '1px solid #FF3B9A' : 'none',
+                borderRadius: '20px',
+                flexShrink: 0,
+                transition: 'all 0.3s ease'
               }}>
-                {messages.length}
-              </span>
-            </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke={remainingMessages <= 3 ? "#FF3B9A" : "#4A90E2"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: remainingMessages <= 3 ? '#FF3B9A' : 'white'
+                }}>
+                  {remainingMessages} left
+                </span>
+              </div>
+            )}
           </div>
         ) : (
           <div style={{
@@ -825,6 +845,13 @@ function ChatPageContent() {
           }}>Account</div>
         </a>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        characterName={character?.name}
+      />
 
       <style jsx>{`
         input::placeholder {
