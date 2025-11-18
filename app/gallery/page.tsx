@@ -51,6 +51,7 @@ export default function GalleryPage() {
       flexDirection: 'column',
       minHeight: '100vh',
       maxWidth: '393px',
+      width: '100%',
       margin: '0 auto'
     }}>
       {/* Header */}
@@ -61,7 +62,7 @@ export default function GalleryPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px 0 25px',
+        padding: '0 16px',
         position: 'sticky',
         top: 0,
         zIndex: 100,

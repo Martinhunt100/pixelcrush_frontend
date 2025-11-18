@@ -45,7 +45,8 @@ export default function LoginPage() {
       minHeight: '100vh',
       maxWidth: '393px',
       margin: '0 auto',
-      padding: '24px'
+      padding: '24px 16px',
+      width: '100%'
     }}>
       {/* Logo */}
       <div style={{ marginBottom: '48px', textAlign: 'center' }}>

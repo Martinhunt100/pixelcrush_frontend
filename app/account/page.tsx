@@ -38,7 +38,8 @@ function AccountPageContent() {
       flexDirection: 'column',
       minHeight: '100vh',
       maxWidth: '393px',
-      margin: '0 auto'
+      margin: '0 auto',
+      width: '100%'
     }}>
       {/* Header */}
       <div style={{
@@ -48,7 +49,7 @@ function AccountPageContent() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px 0 25px',
+        padding: '0 16px',
         position: 'sticky',
         top: 0,
         zIndex: 100,

@@ -161,7 +161,8 @@ function ChatPageContent() {
       flexDirection: 'column',
       minHeight: '100vh',
       maxWidth: '393px',
-      margin: '0 auto'
+      margin: '0 auto',
+      width: '100%'
     }}>
       {/* Header */}
       <div style={{
@@ -171,7 +172,7 @@ function ChatPageContent() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px 0 25px',
+        padding: '0 16px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
@@ -343,7 +344,7 @@ function ChatPageContent() {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '20px 12px 90px'
+          padding: '20px 16px 90px'
         }}
       >
         {/* Disclaimer */}
