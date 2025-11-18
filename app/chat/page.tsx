@@ -16,7 +16,11 @@ function ChatPageContent() {
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [sendTimestamp, setSendTimestamp] = useState<number | null>(null);
+  const [showTimeout, setShowTimeout] = useState(false);
+  const [lastMessage, setLastMessage] = useState<string>('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load character details
   useEffect(() => {
@@ -52,7 +56,12 @@ function ChatPageContent() {
                            response.messages ? response.messages :
                            [];
 
-      setMessages(messagesArray);
+      // Sort messages by timestamp to ensure correct order (oldest first)
+      const sortedMessages = messagesArray.sort((a: Message, b: Message) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+
+      setMessages(sortedMessages);
     } catch (error) {
       console.error('Failed to load messages:', error);
       setMessages([]); // Set empty array on error
@@ -75,6 +84,13 @@ function ChatPageContent() {
     scrollToBottom();
   }, [messages]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   const getCurrentTime = () => {
     const now = new Date();
     let hours = now.getHours();
@@ -90,6 +106,18 @@ function ChatPageContent() {
 
     setSending(true);
     setMessageInput('');
+    setShowTimeout(false);
+    setLastMessage(content);
+    setSendTimestamp(Date.now());
+
+    // Set up 30-second timeout
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      if (sending) {
+        setShowTimeout(true);
+        setSending(false);
+      }
+    }, 30000);
 
     try {
       console.log('Sending message:', { conversationId, content });
@@ -98,20 +126,43 @@ function ChatPageContent() {
 
       console.log('Message sent:', response);
 
+      // Clear timeout on successful response
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setSendTimestamp(null);
+      setShowTimeout(false);
+
       // Add both user message and AI response to the messages
       if (response.userMessage && response.aiMessage) {
-        setMessages(prev => [...prev, response.userMessage, response.aiMessage]);
+        // Sort new messages by timestamp before adding
+        const newMessages = [response.userMessage, response.aiMessage].sort((a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        setMessages(prev => {
+          const combined = [...prev, ...newMessages];
+          // Re-sort all messages to ensure correct order
+          return combined.sort((a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        });
       } else {
         // Fallback: reload messages if response format is unexpected
         await loadMessages();
       }
     } catch (error) {
       console.error('Failed to send message:', error);
-      alert('Failed to send message. Please try again.');
-      setMessageInput(content); // Restore message on error
+      // Clear timeout on error
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setSendTimestamp(null);
+      setShowTimeout(true); // Show timeout UI on error
     } finally {
       setSending(false);
     }
+  };
+
+  const handleRetry = () => {
+    setShowTimeout(false);
+    setMessageInput(lastMessage);
+    handleSendMessage();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -462,8 +513,8 @@ function ChatPageContent() {
           )
         )}
 
-        {/* Sending indicator */}
-        {sending && (
+        {/* Typing indicator */}
+        {sending && !showTimeout && (
           <div style={{
             maxWidth: '273px',
             marginBottom: '16px'
@@ -477,9 +528,91 @@ function ChatPageContent() {
               fontFamily: 'Roboto, sans-serif',
               fontSize: '16px',
               lineHeight: '21px',
-              fontStyle: 'italic'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
-              Typing...
+              <span>{character?.name || 'AI'} is typing</span>
+              <span style={{
+                display: 'inline-flex',
+                gap: '3px',
+                alignItems: 'center'
+              }}>
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: '#202124',
+                  animation: 'typingDot 1.4s infinite',
+                  animationDelay: '0s'
+                }} />
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: '#202124',
+                  animation: 'typingDot 1.4s infinite',
+                  animationDelay: '0.2s'
+                }} />
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: '#202124',
+                  animation: 'typingDot 1.4s infinite',
+                  animationDelay: '0.4s'
+                }} />
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Timeout message with retry */}
+        {showTimeout && (
+          <div style={{
+            maxWidth: '273px',
+            marginBottom: '16px'
+          }}>
+            <div style={{
+              padding: '12px 16px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(255,59,154,0.15) 0%, rgba(164,69,237,0.15) 100%)',
+              border: '1px solid rgba(255,59,154,0.3)',
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: '14px',
+              lineHeight: '20px',
+              color: 'white',
+              marginBottom: '12px'
+            }}>
+              <div style={{ marginBottom: '8px' }}>
+                {character?.name || 'Your crush'} has stepped away for a moment. She'll be back shortly! 💕
+              </div>
+              <button
+                onClick={handleRetry}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'Poppins, sans-serif',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 59, 154, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                Try again
+              </button>
             </div>
           </div>
         )}
@@ -701,6 +834,16 @@ function ChatPageContent() {
         @keyframes shimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
+        }
+        @keyframes typingDot {
+          0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.7;
+          }
+          30% {
+            transform: translateY(-8px);
+            opacity: 1;
+          }
         }
       `}</style>
     </div>
