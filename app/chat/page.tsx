@@ -102,6 +102,14 @@ function ChatPageContent() {
   };
 
   useEffect(() => {
+    console.log('🎨 RENDER: Messages state changed');
+    console.log('   New messages count:', messages.length);
+    console.log('   Order in state:', messages.map((m, i) => ({
+      renderIndex: i,
+      id: m.id,
+      sender: m.sender_type,
+      content: m.content.substring(0, 20)
+    })));
     scrollToBottom();
   }, [messages]);
 
@@ -125,6 +133,15 @@ function ChatPageContent() {
     const content = messageInput.trim();
     if (!content || !conversationId || sending) return;
 
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🚀 STEP 1: User clicked send');
+    console.log('   Message content:', content);
+    console.log('   Current messages count:', messages.length);
+    console.log('   Last 3 messages:', messages.slice(-3).map(m => ({
+      sender: m.sender_type,
+      content: m.content.substring(0, 20)
+    })));
+
     setSending(true);
     setMessageInput('');
     setShowTimeout(false);
@@ -141,11 +158,14 @@ function ChatPageContent() {
     }, 30000);
 
     try {
-      console.log('Sending message:', { conversationId, content });
+      console.log('📡 STEP 2: Sending to API...');
+      console.log('   Endpoint: /api/chat/message');
+      console.log('   Conversation ID:', conversationId);
 
       const response = await chatAPI.sendMessage(conversationId, content);
 
-      console.log('Message sent:', response);
+      console.log('📬 STEP 3: API response received');
+      console.log('   Full response:', response);
 
       // Clear timeout on successful response
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -159,38 +179,64 @@ function ChatPageContent() {
         const userMsg = response.userMessage;
         const aiMsg = response.aiMessage;
 
-        // DEBUG: Log received messages
-        console.log('📨 Received from API:', {
-          userMsg: { sender: userMsg.sender_type, content: userMsg.content.substring(0, 20), time: userMsg.created_at },
-          aiMsg: { sender: aiMsg.sender_type, content: aiMsg.content.substring(0, 20), time: aiMsg.created_at }
+        console.log('🔍 STEP 4: Analyzing response messages');
+        console.log('   User message:', {
+          id: userMsg.id,
+          sender: userMsg.sender_type,
+          content: userMsg.content.substring(0, 30),
+          created_at: userMsg.created_at,
+          timestamp_ms: new Date(userMsg.created_at).getTime()
+        });
+        console.log('   AI message:', {
+          id: aiMsg.id,
+          sender: aiMsg.sender_type,
+          content: aiMsg.content.substring(0, 30),
+          created_at: aiMsg.created_at,
+          timestamp_ms: new Date(aiMsg.created_at).getTime()
         });
 
         // Ensure user message always has earlier timestamp than AI message
         const userTime = new Date(userMsg.created_at).getTime();
         const aiTime = new Date(aiMsg.created_at).getTime();
 
+        console.log('⏰ STEP 5: Timestamp comparison');
+        console.log('   User timestamp:', userTime);
+        console.log('   AI timestamp:', aiTime);
+        console.log('   Difference (ms):', aiTime - userTime);
+
         if (aiTime <= userTime) {
           // Backend bug: AI timestamp is earlier/same - force correct order
-          console.warn('⚠️ Backend timestamp issue detected - forcing correct order');
-          console.warn(`   User time: ${userMsg.created_at}, AI time: ${aiMsg.created_at}`);
+          console.error('❌ BACKEND BUG DETECTED: AI timestamp is earlier than user timestamp!');
+          console.log('   Original user time:', userMsg.created_at);
+          console.log('   Original AI time:', aiMsg.created_at);
           aiMsg.created_at = new Date(userTime + 1000).toISOString(); // AI 1 second after user
-          console.warn(`   Fixed AI time to: ${aiMsg.created_at}`);
+          console.log('   ✅ Fixed AI time to:', aiMsg.created_at);
+        } else {
+          console.log('   ✅ Timestamps are correct (AI is after User)');
         }
 
+        console.log('🔄 STEP 6: Adding to messages state');
+        console.log('   Current state has:', messages.length, 'messages');
+
         setMessages(prev => {
+          console.log('   Previous state length:', prev.length);
           const combined = [...prev, userMsg, aiMsg];
+          console.log('   Combined length (prev + 2 new):', combined.length);
+
           // Sort all messages by timestamp (now guaranteed correct)
           const sorted = combined.sort((a, b) =>
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
 
-          // DEBUG: Log final order
-          console.log('✅ Final message order:', sorted.slice(-5).map((m, i) => ({
-            index: sorted.length - 5 + i,
+          console.log('   ✅ Sorted messages (ALL):', sorted.map((m, i) => ({
+            index: i,
+            id: m.id,
             sender: m.sender_type,
-            content: m.content.substring(0, 20)
+            content: m.content.substring(0, 20),
+            created_at: m.created_at
           })));
 
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
           return sorted;
         });
 
@@ -498,7 +544,12 @@ function ChatPageContent() {
 
         {/* Messages */}
         {!loading && messages && messages.length > 0 ? (
-          messages.map((msg, idx) => (
+          (() => {
+            console.log('📺 RENDERING MESSAGES TO DOM');
+            console.log('   Messages array length:', messages.length);
+            console.log('   EXACT RENDER ORDER:', messages.map((m, i) => `${i}: ${m.sender_type} - ${m.content.substring(0, 20)}`));
+            return messages;
+          })().map((msg, idx) => (
           <div
             key={msg.id || idx}
             style={{
