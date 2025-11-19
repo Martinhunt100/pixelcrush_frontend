@@ -507,7 +507,7 @@ function ChatPageContent() {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '20px 16px 140px' // Increased bottom padding to prevent last message being hidden
+          padding: '20px 16px 180px' // Increased from 140px to 180px to ensure last message visible
         }}
       >
         {/* Disclaimer */}
@@ -734,24 +734,28 @@ function ChatPageContent() {
           </div>
         )}
 
-        {/* Scroll anchor - invisible div to scroll to bottom */}
-        <div ref={messagesEndRef} style={{ height: '1px' }} />
+        {/* Scroll anchor - provides space at bottom for scrolling */}
+        <div ref={messagesEndRef} style={{ height: '20px' }} />
       </div>
 
-      {/* Input Area */}
+      {/* Input Area with gradient overlay */}
       <div style={{
         position: 'fixed',
         bottom: '78px',
-        left: '16px',
-        right: '16px',
-        maxWidth: 'calc(393px - 32px)',
+        left: 0,
+        right: 0,
+        maxWidth: '393px',
         margin: '0 auto',
-        background: 'black',
-        border: '1px solid #737373',
-        borderRadius: '8px',
-        padding: '8px 16px'
+        padding: '16px 16px 0',
+        background: 'linear-gradient(to top, #131313 0%, #131313 70%, rgba(19,19,19,0.95) 85%, rgba(19,19,19,0) 100%)',
+        pointerEvents: 'none' // Allow clicking through the gradient
       }}>
         <div style={{
+          background: 'black',
+          border: '1px solid #737373',
+          borderRadius: '8px',
+          padding: '8px 16px',
+          pointerEvents: 'auto', // Re-enable pointer events for the input box itself
           display: 'flex',
           alignItems: 'center',
           gap: '12px'
