@@ -21,6 +21,9 @@ function ChatPageContent() {
   const [showTimeout, setShowTimeout] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  // Message queue to prevent race conditions
+  const [messageQueue, setMessageQueue] = useState<string[]>([]);
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   // Action tip education - shows once per user
   const [showActionTip, setShowActionTip] = useState(() => {
     // Check if user has seen tip before
@@ -137,20 +140,40 @@ function ChatPageContent() {
     return `${hours}:${minutes.toString().padStart(2, '0')}${ampm}`;
   };
 
-  const handleSendMessage = async () => {
-    const content = messageInput.trim();
-    if (!content || !conversationId || sending) return;
+  // Process message queue one at a time
+  const processQueue = async () => {
+    if (isProcessingQueue || messageQueue.length === 0) return;
+
+    setIsProcessingQueue(true);
+
+    while (messageQueue.length > 0) {
+      const nextMessage = messageQueue[0];
+      setMessageQueue(prev => prev.slice(1)); // Remove from queue
+
+      await sendMessageToBackend(nextMessage);
+    }
+
+    setIsProcessingQueue(false);
+  };
+
+  // Trigger queue processing when new messages are added
+  useEffect(() => {
+    processQueue();
+  }, [messageQueue]);
+
+  // Send message to backend (called by queue processor)
+  const sendMessageToBackend = async (content: string) => {
+    if (!content || !conversationId) return;
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🚀 STEP 1: User clicked send');
+    console.log('🚀 STEP 1: Processing message from queue');
     console.log('   Message content:', content);
 
     // Generate temporary ID for optimistic update
     const tempId = `temp-${Date.now()}`;
     const tempTimestamp = new Date().toISOString();
 
-    // STEP 2: Clear input and add message to UI IMMEDIATELY (optimistic update)
-    setMessageInput('');
+    // STEP 2: Add message to UI IMMEDIATELY (optimistic update)
 
     const optimisticUserMessage: Message = {
       id: tempId as any,
@@ -285,7 +308,7 @@ function ChatPageContent() {
 
         // Show upgrade modal for message limit errors
         setShowUpgradeModal(true);
-        setMessageInput(content); // Restore message so user can see what they tried to send
+        // Don't restore message - user can try again after upgrading
       } else {
         console.log('⚠️ Other error - marking message as failed');
 
@@ -300,10 +323,31 @@ function ChatPageContent() {
 
         // Show timeout UI for other errors
         setShowTimeout(true);
+
+        // Add system message for error
+        setMessages(prev => [...prev, {
+          id: `system-${Date.now()}` as any,
+          conversation_id: conversationId,
+          sender_type: 'system' as any,
+          content: 'Something went wrong. Please try again.',
+          created_at: new Date().toISOString()
+        }]);
       }
     } finally {
       setSending(false);
     }
+  };
+
+  // Handle send button click - adds message to queue
+  const handleSendMessage = () => {
+    const content = messageInput.trim();
+    if (!content || isProcessingQueue) return;
+
+    // Clear input immediately
+    setMessageInput('');
+
+    // Add to queue
+    setMessageQueue(prev => [...prev, content]);
   };
 
   const handleRetry = () => {
@@ -320,10 +364,12 @@ function ChatPageContent() {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    // Enter sends message, Shift+Enter adds new line
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
+    // Shift+Enter allows multiline (default textarea behavior)
   };
 
   const renderMessageText = (text: string) => {
@@ -674,7 +720,35 @@ function ChatPageContent() {
             console.log('   Messages array length:', messages.length);
             console.log('   EXACT RENDER ORDER:', messages.map((m, i) => `${i}: ${m.sender_type} - ${m.content.substring(0, 20)}`));
             return messages;
-          })().map((msg, idx) => (
+          })().map((msg, idx) => {
+            // System message - centered with special styling
+            if ((msg as any).sender_type === 'system') {
+              return (
+                <div
+                  key={msg.id || idx}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    marginBottom: '16px'
+                  }}
+                >
+                  <div style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    borderRadius: '12px',
+                    padding: '8px 16px',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.7)',
+                    textAlign: 'center',
+                    maxWidth: '80%'
+                  }}>
+                    {msg.content}
+                  </div>
+                </div>
+              );
+            }
+
+            // Regular user/AI messages
+            return (
           <div
             key={msg.id || idx}
             style={{
@@ -776,7 +850,8 @@ function ChatPageContent() {
               </div>
             </div>
           </div>
-          ))
+            );
+          })
         ) : (
           !loading && (
             <div style={{
@@ -955,8 +1030,9 @@ function ChatPageContent() {
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={sending}
+            disabled={isProcessingQueue}
             placeholder="Say something or *do something*..."
+            autoComplete="off"
             style={{
               flex: 1,
               background: 'none',
@@ -964,20 +1040,22 @@ function ChatPageContent() {
               color: 'white',
               fontFamily: 'Inter, sans-serif',
               fontSize: '14px',
-              outline: 'none'
+              outline: 'none',
+              opacity: isProcessingQueue ? 0.5 : 1
             }}
           />
           <button
             onClick={handleSendMessage}
-            disabled={sending || !messageInput.trim()}
+            disabled={isProcessingQueue || !messageInput.trim()}
             style={{
               width: '35px',
               height: '35px',
               background: 'none',
               border: 'none',
               padding: 0,
-              cursor: sending || !messageInput.trim() ? 'not-allowed' : 'pointer',
-              opacity: sending || !messageInput.trim() ? 0.5 : 1
+              cursor: isProcessingQueue || !messageInput.trim() ? 'not-allowed' : 'pointer',
+              opacity: isProcessingQueue || !messageInput.trim() ? 0.5 : 1,
+              transition: 'opacity 0.2s ease'
             }}
           >
             <img
