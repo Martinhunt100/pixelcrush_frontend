@@ -318,12 +318,17 @@ function ChatPageContent() {
       color: '#D1D1D1',
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100vh',
+      height: '100vh',
       maxWidth: '393px',
       margin: '0 auto',
-      width: '100%'
+      width: '100%',
+      overflow: 'hidden',
+      position: 'fixed',
+      top: 0,
+      left: '50%',
+      transform: 'translateX(-50%)'
     }}>
-      {/* Header */}
+      {/* Header - Fixed at top */}
       <div style={{
         background: '#131313',
         borderBottom: '0.593px solid #363636',
@@ -332,8 +337,7 @@ function ChatPageContent() {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
-        position: 'sticky',
-        top: 0,
+        flexShrink: 0,
         zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
@@ -373,7 +377,7 @@ function ChatPageContent() {
         </a>
       </div>
 
-      {/* Character Info Bar */}
+      {/* Character Info Bar - Fixed below header */}
       {characterId && (
         character ? (
           <div style={{
@@ -383,8 +387,7 @@ function ChatPageContent() {
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            position: 'sticky',
-            top: '64px',
+            flexShrink: 0,
             zIndex: 99,
             transition: 'all 0.3s ease'
           }}>
@@ -465,8 +468,7 @@ function ChatPageContent() {
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            position: 'sticky',
-            top: '64px',
+            flexShrink: 0,
             zIndex: 99
           }}>
             <div style={{
@@ -501,13 +503,16 @@ function ChatPageContent() {
         )
       )}
 
-      {/* Messages Container */}
+      {/* Messages Container - Scrollable middle section */}
       <div
         ref={messagesContainerRef}
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '20px 16px 180px' // Increased from 140px to 180px to ensure last message visible
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          padding: '20px 16px 200px' // Extra bottom padding for input + nav bar
         }}
       >
         {/* Disclaimer */}
@@ -738,24 +743,18 @@ function ChatPageContent() {
         <div ref={messagesEndRef} style={{ height: '20px' }} />
       </div>
 
-      {/* Input Area with gradient overlay */}
+      {/* Input Area - Fixed above bottom nav */}
       <div style={{
-        position: 'fixed',
-        bottom: '78px',
-        left: 0,
-        right: 0,
-        maxWidth: '393px',
-        margin: '0 auto',
-        padding: '16px 16px 0',
-        background: 'linear-gradient(to top, #131313 0%, #131313 70%, rgba(19,19,19,0.95) 85%, rgba(19,19,19,0) 100%)',
-        pointerEvents: 'none' // Allow clicking through the gradient
+        background: '#131313',
+        borderTop: '0.593px solid #363636',
+        padding: '12px 16px',
+        flexShrink: 0
       }}>
         <div style={{
           background: 'black',
           border: '1px solid #737373',
           borderRadius: '8px',
           padding: '8px 16px',
-          pointerEvents: 'auto', // Re-enable pointer events for the input box itself
           display: 'flex',
           alignItems: 'center',
           gap: '12px'
@@ -839,12 +838,8 @@ function ChatPageContent() {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - Fixed at bottom */}
       <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
         background: '#131313',
         borderTop: '0.593px solid rgba(255,255,255,0.2)',
         height: '70px',
@@ -852,6 +847,7 @@ function ChatPageContent() {
         justifyContent: 'space-around',
         alignItems: 'center',
         padding: '8px 12px 8px',
+        flexShrink: 0,
         zIndex: 100
       }}>
         <a href="/" style={{
