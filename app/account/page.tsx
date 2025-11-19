@@ -1,12 +1,81 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
+interface Preferences {
+  display_name: string;
+  pronouns: string;
+  nsfw_enabled: boolean;
+  content_intensity: string;
+  response_length: string;
+  action_frequency: string;
+}
+
 function AccountPageContent() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [preferences, setPreferences] = useState<Preferences>({
+    display_name: '',
+    pronouns: 'they/them',
+    nsfw_enabled: true,
+    content_intensity: 'flirty',
+    response_length: 'medium',
+    action_frequency: 'balanced'
+  });
+
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  const loadPreferences = async () => {
+    try {
+      // Try to load from localStorage first (fallback until backend is ready)
+      const savedPrefs = localStorage.getItem('pixelcrush_preferences');
+      if (savedPrefs) {
+        setPreferences(JSON.parse(savedPrefs));
+      }
+
+      // TODO: Load from backend when endpoint is ready
+      // const response = await fetch('/api/users/preferences', {
+      //   headers: { 'Authorization': `Bearer ${token}` }
+      // });
+      // const data = await response.json();
+      // setPreferences(data.preferences);
+    } catch (error) {
+      console.error('Failed to load preferences:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const savePreferences = async () => {
+    setSaving(true);
+    try {
+      // Save to localStorage for now
+      localStorage.setItem('pixelcrush_preferences', JSON.stringify(preferences));
+
+      // TODO: Save to backend when endpoint is ready
+      // const response = await fetch('/api/users/preferences', {
+      //   method: 'PUT',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${token}`
+      //   },
+      //   body: JSON.stringify(preferences)
+      // });
+
+      alert('Settings saved! ✓');
+    } catch (error) {
+      alert('Failed to save settings. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to log out?')) {
@@ -25,394 +94,541 @@ function AccountPageContent() {
     }
   };
 
-  const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase();
-  };
+  if (loading) {
+    return (
+      <div style={{
+        fontFamily: 'Poppins, sans-serif',
+        background: '#131313',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh'
+      }}>
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div style={{
       fontFamily: 'Poppins, sans-serif',
       background: '#131313',
       color: 'white',
-      display: 'flex',
-      flexDirection: 'column',
       minHeight: '100vh',
-      maxWidth: '393px',
+      maxWidth: '600px',
       margin: '0 auto',
-      width: '100%'
+      paddingBottom: '100px'
     }}>
       {/* Header */}
       <div style={{
         background: '#131313',
-        borderBottom: '0.593px solid #363636',
-        height: '64px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        padding: '16px',
         position: 'sticky',
         top: 0,
-        zIndex: 100,
-        boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
+        zIndex: 100
       }}>
-        <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
-          <img
-            src="/icons/logo.png"
-            alt="PixelCrush.ai"
-            style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
-          />
-        </a>
-        <a
-          href="/tokens"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6.593px 16.593px',
-            border: '1px solid rgba(255,255,255,0.8)',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            textDecoration: 'none'
-          }}
-        >
-          <div style={{ width: '30px', height: '30px' }}>
-            <img
-              src="/icons/token-icon.png"
-              alt="Tokens"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
-          </div>
-          <div style={{
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: '16px',
-            lineHeight: '24px',
-            color: 'rgba(255,255,255,0.8)'
-          }}>{user?.tokens !== undefined ? user.tokens.toFixed(1) : '0.8'}</div>
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              fontSize: '24px',
+              cursor: 'pointer',
+              padding: 0,
+              lineHeight: 1
+            }}
+          >
+            ←
+          </button>
+          <h1 style={{
+            fontSize: '20px',
+            fontWeight: 600,
+            margin: 0
+          }}>
+            Account Settings
+          </h1>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '24px 16px 100px 16px',
-        WebkitOverflowScrolling: 'touch'
-      }}>
-        {/* Profile Section */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '32px 0',
-          marginBottom: '32px'
-        }}>
-          <div style={{
-            width: '96px',
-            height: '96px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 50%, #4A90E2 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '40px',
-            fontWeight: 600,
-            marginBottom: '20px',
-            boxShadow: '0 8px 24px rgba(255,59,154,0.3)'
-          }}>
-            {user?.username ? user.username.charAt(0).toUpperCase() : getInitials(user?.email || 'U')}
-          </div>
-          <div style={{
-            fontWeight: 600,
-            fontSize: '24px',
-            lineHeight: '32px',
-            color: 'white',
-            marginBottom: '8px'
-          }}>
-            {user?.username || 'User'}
-          </div>
-          <div style={{
-            fontSize: '15px',
-            lineHeight: '22px',
-            color: 'rgba(255,255,255,0.6)',
-            marginBottom: '4px'
-          }}>
-            {user?.email}
-          </div>
-          <div style={{
-            fontSize: '13px',
-            lineHeight: '20px',
-            color: 'rgba(255,255,255,0.4)'
-          }}>
-            Member since {formatDate(user?.created_at)}
-          </div>
-        </div>
-
+      <div style={{ padding: '16px' }}>
         {/* Account Info Section */}
-        <div style={{ marginBottom: '32px' }}>
-          <h3 style={{
+        <section style={{
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '16px',
+          padding: '24px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          marginBottom: '24px'
+        }}>
+          <h2 style={{
+            fontSize: '18px',
             fontWeight: 600,
-            fontSize: '14px',
-            lineHeight: '20px',
-            color: 'rgba(255,255,255,0.5)',
-            textTransform: 'uppercase',
+            color: '#FF3B9A',
             marginBottom: '16px',
-            letterSpacing: '0.5px'
-          }}>Account Information</h3>
-          <div style={{
-            background: 'rgba(255,255,255,0.03)',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            border: '1px solid rgba(255,255,255,0.05)'
+            marginTop: 0
           }}>
-            <div style={{
-              padding: '20px',
-              borderBottom: '1px solid rgba(255,255,255,0.05)'
-            }}>
+            Account
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
               <div style={{
                 fontSize: '13px',
-                color: 'rgba(255,255,255,0.5)',
-                marginBottom: '6px'
-              }}>Email Address</div>
-              <div style={{
-                fontSize: '15px',
-                color: 'white',
-                wordBreak: 'break-all'
-              }}>{user?.email}</div>
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '4px'
+              }}>
+                Email
+              </div>
+              <div style={{ color: 'white' }}>{user?.email}</div>
             </div>
-            <div style={{
-              padding: '20px',
-              borderBottom: '1px solid rgba(255,255,255,0.05)'
-            }}>
+
+            <div>
               <div style={{
                 fontSize: '13px',
-                color: 'rgba(255,255,255,0.5)',
-                marginBottom: '6px'
-              }}>Username</div>
-              <div style={{
-                fontSize: '15px',
-                color: 'white'
-              }}>{user?.username || 'Not set'}</div>
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '4px'
+              }}>
+                Member Since
+              </div>
+              <div style={{ color: 'white' }}>
+                {formatDate(user?.created_at)}
+              </div>
             </div>
-            <div style={{
-              padding: '20px'
-            }}>
+
+            <div>
               <div style={{
                 fontSize: '13px',
-                color: 'rgba(255,255,255,0.5)',
-                marginBottom: '6px'
-              }}>Account Created</div>
-              <div style={{
-                fontSize: '15px',
-                color: 'white'
-              }}>{formatDate(user?.created_at)}</div>
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '4px'
+              }}>
+                Subscription
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: 'white', fontWeight: 600 }}>
+                  Free
+                </span>
+                <button
+                  onClick={() => router.push('/pricing')}
+                  style={{
+                    background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
+                    border: 'none',
+                    padding: '4px 12px',
+                    borderRadius: '16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Upgrade
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Tokens Section */}
-        <div style={{ marginBottom: '32px' }}>
-          <h3 style={{
+        {/* Profile Section */}
+        <section style={{
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '16px',
+          padding: '24px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          marginBottom: '24px'
+        }}>
+          <h2 style={{
+            fontSize: '18px',
             fontWeight: 600,
-            fontSize: '14px',
-            lineHeight: '20px',
-            color: 'rgba(255,255,255,0.5)',
-            textTransform: 'uppercase',
+            color: '#FF3B9A',
             marginBottom: '16px',
-            letterSpacing: '0.5px'
-          }}>Tokens & Billing</h3>
-          <div style={{
-            background: 'rgba(255,255,255,0.03)',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            border: '1px solid rgba(255,255,255,0.05)'
+            marginTop: 0
           }}>
-            <a href="/tokens" style={{
+            Profile
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '8px'
+              }}>
+                Display Name (optional)
+              </label>
+              <input
+                type="text"
+                value={preferences.display_name}
+                onChange={(e) => setPreferences({ ...preferences, display_name: e.target.value })}
+                placeholder="What should characters call you?"
+                maxLength={50}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  outline: 'none'
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#FF3B9A'}
+                onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+              />
+              <p style={{
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.4)',
+                marginTop: '4px',
+                marginBottom: 0
+              }}>
+                Leave blank to not be addressed by name
+              </p>
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '8px'
+              }}>
+                Pronouns
+              </label>
+              <select
+                value={preferences.pronouns}
+                onChange={(e) => setPreferences({ ...preferences, pronouns: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#FF3B9A'}
+                onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+              >
+                <option value="he/him">He/Him</option>
+                <option value="she/her">She/Her</option>
+                <option value="they/them">They/Them</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        {/* Content Settings Section */}
+        <section style={{
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '16px',
+          padding: '24px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          marginBottom: '24px'
+        }}>
+          <h2 style={{
+            fontSize: '18px',
+            fontWeight: 600,
+            color: '#FF3B9A',
+            marginBottom: '16px',
+            marginTop: 0
+          }}>
+            Content Settings
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* NSFW Toggle */}
+            <div style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '20px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              transition: 'background 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <img
-                    src="/icons/token-icon.png"
-                    alt="Tokens"
-                    style={{ width: '24px', height: '24px', objectFit: 'contain' }}
-                  />
-                </div>
-                <div>
-                  <div style={{
-                    fontSize: '15px',
-                    fontWeight: 500,
-                    color: 'white',
-                    marginBottom: '4px'
-                  }}>Buy Tokens</div>
-                  <div style={{
-                    fontSize: '13px',
-                    color: 'rgba(255,255,255,0.5)'
-                  }}>{user?.tokens !== undefined ? user.tokens.toFixed(1) : '0.8'} remaining</div>
+              alignItems: 'flex-start',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 500, marginBottom: '4px' }}>NSFW Content</div>
+                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
+                  Allow explicit and adult content in conversations
                 </div>
               </div>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 5l7 7-7 7" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </a>
+              <label style={{
+                position: 'relative',
+                display: 'inline-block',
+                width: '48px',
+                height: '24px',
+                flexShrink: 0,
+                marginLeft: '12px'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={preferences.nsfw_enabled}
+                  onChange={(e) => setPreferences({ ...preferences, nsfw_enabled: e.target.checked })}
+                  style={{ display: 'none' }}
+                />
+                <span style={{
+                  position: 'absolute',
+                  cursor: 'pointer',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: preferences.nsfw_enabled
+                    ? 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)'
+                    : 'rgba(255,255,255,0.1)',
+                  transition: '0.4s',
+                  borderRadius: '24px'
+                }}>
+                  <span style={{
+                    position: 'absolute',
+                    content: '',
+                    height: '20px',
+                    width: '20px',
+                    left: preferences.nsfw_enabled ? '26px' : '2px',
+                    bottom: '2px',
+                    background: 'white',
+                    transition: '0.4s',
+                    borderRadius: '50%'
+                  }} />
+                </span>
+              </label>
+            </div>
+
+            {/* Content Intensity */}
+            {preferences.nsfw_enabled && (
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  color: 'rgba(255,255,255,0.6)',
+                  marginBottom: '8px'
+                }}>
+                  Content Intensity
+                </label>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '8px'
+                }}>
+                  {[
+                    { value: 'romantic', label: 'Romantic', desc: 'Sweet & emotional' },
+                    { value: 'flirty', label: 'Flirty', desc: 'Playful & suggestive' },
+                    { value: 'explicit', label: 'Explicit', desc: 'No restrictions' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setPreferences({ ...preferences, content_intensity: option.value })}
+                      style={{
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: '1px solid',
+                        borderColor: preferences.content_intensity === option.value
+                          ? 'transparent'
+                          : 'rgba(255,255,255,0.1)',
+                        background: preferences.content_intensity === option.value
+                          ? 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)'
+                          : 'rgba(255,255,255,0.05)',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ fontWeight: 500, fontSize: '14px', marginBottom: '4px' }}>
+                        {option.label}
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+                        {option.desc}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
+
+        {/* Chat Style Section */}
+        <section style={{
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '16px',
+          padding: '24px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          marginBottom: '24px'
+        }}>
+          <h2 style={{
+            fontSize: '18px',
+            fontWeight: 600,
+            color: '#FF3B9A',
+            marginBottom: '16px',
+            marginTop: 0
+          }}>
+            Chat Style
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Response Length */}
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '8px'
+              }}>
+                Response Length
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '8px'
+              }}>
+                {[
+                  { value: 'short', label: 'Short', desc: '1-2 sentences' },
+                  { value: 'medium', label: 'Medium', desc: '2-4 sentences' },
+                  { value: 'long', label: 'Long', desc: '4-6+ sentences' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setPreferences({ ...preferences, response_length: option.value })}
+                    style={{
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: '1px solid',
+                      borderColor: preferences.response_length === option.value
+                        ? 'transparent'
+                        : 'rgba(255,255,255,0.1)',
+                      background: preferences.response_length === option.value
+                        ? 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)'
+                        : 'rgba(255,255,255,0.05)',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: '13px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ fontWeight: 500, marginBottom: '2px' }}>
+                      {option.label}
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                      {option.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Frequency */}
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: '8px'
+              }}>
+                Action Frequency
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '8px'
+              }}>
+                {[
+                  { value: 'less', label: 'Less', desc: 'More dialogue' },
+                  { value: 'balanced', label: 'Balanced', desc: 'Mix of both' },
+                  { value: 'heavy', label: 'Heavy', desc: 'More actions' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setPreferences({ ...preferences, action_frequency: option.value })}
+                    style={{
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: '1px solid',
+                      borderColor: preferences.action_frequency === option.value
+                        ? 'transparent'
+                        : 'rgba(255,255,255,0.1)',
+                      background: preferences.action_frequency === option.value
+                        ? 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)'
+                        : 'rgba(255,255,255,0.05)',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: '13px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ fontWeight: 500, marginBottom: '2px' }}>
+                      {option.label}
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                      {option.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Save Button */}
+        <button
+          onClick={savePreferences}
+          disabled={saving}
+          style={{
+            width: '100%',
+            padding: '16px',
+            background: saving
+              ? 'rgba(255,255,255,0.1)'
+              : 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
+            border: 'none',
+            borderRadius: '12px',
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: 600,
+            cursor: saving ? 'not-allowed' : 'pointer',
+            fontFamily: 'inherit',
+            marginBottom: '12px',
+            opacity: saving ? 0.5 : 1,
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
 
         {/* Logout Button */}
         <button
           onClick={handleLogout}
           style={{
             width: '100%',
-            padding: '18px',
-            background: 'rgba(255,59,154,0.1)',
-            border: '1px solid rgba(255,59,154,0.3)',
-            borderRadius: '16px',
-            fontSize: '16px',
-            fontWeight: 600,
-            color: '#FF3B9A',
+            padding: '12px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '12px',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: 500,
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            fontFamily: 'Poppins, sans-serif'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255,59,154,0.15)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255,59,154,0.1)';
-            e.currentTarget.style.transform = 'translateY(0)';
+            fontFamily: 'inherit',
+            transition: 'all 0.2s ease'
           }}
         >
-          Log Out
+          Logout
         </button>
       </div>
 
-      {/* Bottom Navigation */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: '#131313',
-        borderTop: '0.593px solid rgba(255,255,255,0.2)',
-        height: '70px',
-        display: 'flex',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        padding: '8px 12px 8px',
-        zIndex: 100
-      }}>
-        <a href="/" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textDecoration: 'none',
-          color: 'white',
-          gap: '4px',
-          opacity: 0.6
-        }}>
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 9.5L12 3L21 9.5V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M9 22V12H15V22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <div style={{
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: '10px',
-            lineHeight: '15px'
-          }}>Home</div>
-        </a>
-
-        <a href="/chat-landing" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textDecoration: 'none',
-          color: 'white',
-          gap: '4px',
-          opacity: 0.6
-        }}>
-          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/icons/nav-chat.png" alt="Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-          <div style={{
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: '10px',
-            lineHeight: '15px'
-          }}>Chat</div>
-        </a>
-
-        <a href="/voice" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textDecoration: 'none',
-          color: 'white',
-          gap: '4px',
-          opacity: 0.6
-        }}>
-          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/icons/nav-voice.png" alt="Voice Call" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-          <div style={{
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: '10px',
-            lineHeight: '15px'
-          }}>Voice Call</div>
-        </a>
-
-        <a href="/gallery" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textDecoration: 'none',
-          color: 'white',
-          gap: '4px',
-          opacity: 0.6
-        }}>
-          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/icons/nav-gallery.png" alt="Gallery" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-          <div style={{
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: '10px',
-            lineHeight: '15px'
-          }}>Gallery</div>
-        </a>
-
-        <a href="/account" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textDecoration: 'none',
-          color: 'white',
-          gap: '4px'
-        }}>
-          <div style={{ height: '30px', width: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/icons/nav-account.png" alt="Account" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-          <div style={{
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: '10px',
-            lineHeight: '15px'
-          }}>Account</div>
-        </a>
-      </div>
+      <style jsx>{`
+        select option {
+          background: #131313;
+          color: white;
+        }
+        input::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+      `}</style>
     </div>
   );
 }
