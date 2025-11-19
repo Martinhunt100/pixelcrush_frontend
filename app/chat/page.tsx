@@ -24,9 +24,6 @@ function ChatPageContent() {
   const [showTimeout, setShowTimeout] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  // Message queue to prevent race conditions
-  const [messageQueue, setMessageQueue] = useState<string[]>([]);
-  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   // Action tip education - shows once per user
   const [showActionTip, setShowActionTip] = useState(() => {
     // Check if user has seen tip before
@@ -143,245 +140,118 @@ function ChatPageContent() {
     return `${hours}:${minutes.toString().padStart(2, '0')}${ampm}`;
   };
 
-  // Process message queue one at a time (FIXED - no while loop)
-  const processQueue = async () => {
-    console.log('=== PROCESS QUEUE ===');
-    console.log('Queue length:', messageQueue.length);
-    console.log('Is processing:', isProcessingQueue);
+  // Handle send message with TRUE OPTIMISTIC UI
+  const handleSendMessage = async () => {
+    const content = messageInput.trim();
 
-    // Guard: Don't process if already processing or queue is empty
-    if (isProcessingQueue || messageQueue.length === 0) {
-      console.log('BLOCKED: already processing or queue empty');
+    // Guard: Don't send if empty, no conversation, or already sending
+    if (!content || !conversationId || sending) {
+      console.log('BLOCKED: empty content, no conversation, or already sending');
       return;
     }
 
-    setIsProcessingQueue(true);
-
-    // Process ONLY the first message (not while loop)
-    const nextMessage = messageQueue[0];
-    console.log('Processing message:', nextMessage);
-
-    try {
-      // Remove from queue BEFORE sending to prevent re-processing
-      setMessageQueue(prev => prev.slice(1));
-
-      await sendMessageToBackend(nextMessage);
-    } catch (error) {
-      console.error('Send failed:', error);
-    } finally {
-      setIsProcessingQueue(false);
-    }
-  };
-
-  // Trigger queue processing when new messages are added
-  useEffect(() => {
-    processQueue();
-  }, [messageQueue]);
-
-  // Send message to backend (called by queue processor)
-  const sendMessageToBackend = async (content: string) => {
-    if (!content || !conversationId) return;
-
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🚀 STEP 1: Processing message from queue');
-    console.log('   Message content:', content);
+    console.log('🚀 TRUE OPTIMISTIC UI: Sending message');
+    console.log('   Content:', content);
 
     // Generate temporary ID for optimistic update
     const tempId = `temp-${Date.now()}`;
-    const tempTimestamp = new Date().toISOString();
 
-    // STEP 2: Add message to UI IMMEDIATELY (optimistic update)
+    // STEP 1: Clear input IMMEDIATELY (instant user feedback)
+    setMessageInput('');
 
+    // STEP 2: Add user message to DOM IMMEDIATELY (optimistic update)
     const optimisticUserMessage: Message = {
       id: tempId as any,
       conversation_id: conversationId,
       content: content,
       sender_type: 'user',
-      created_at: tempTimestamp,
-      temporary: true as any // Mark as temporary for visual feedback
+      created_at: new Date().toISOString(),
+      temporary: true as any
     };
 
-    console.log('⚡ STEP 2: Adding optimistic message INSTANTLY');
-    console.log('   Temp ID:', tempId);
-    console.log('   Current messages:', messages.length);
-
-    setMessages(prev => [...prev, optimisticUserMessage]);
+    console.log('⚡ INSTANT: Adding user message to DOM NOW');
+    setMessages(prev => [...prev, optimisticUserMessage]); // USER SEES THEIR MESSAGE IMMEDIATELY!
     setSending(true);
     setShowTimeout(false);
     setLastMessage(content);
-    setSendTimestamp(Date.now());
 
     // Set up 30-second timeout
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      if (sending) {
-        setShowTimeout(true);
-        setSending(false);
-      }
+      setShowTimeout(true);
+      setSending(false);
     }, 30000);
 
     try {
-      console.log('📡 STEP 3: Sending to API (user already sees their message!)');
-      console.log('   Endpoint: /api/chat/message');
-      console.log('   Conversation ID:', conversationId);
+      console.log('📡 BACKGROUND: Sending to API (user already sees their message)');
 
       const response = await chatAPI.sendMessage(conversationId, content);
 
-      console.log('📬 STEP 4: API response received');
-      console.log('   Full response:', response);
+      console.log('📬 SUCCESS: API response received', response);
 
-      // Clear timeout on successful response
+      // Clear timeout
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      setSendTimestamp(null);
       setShowTimeout(false);
 
-      // STEP 5: Replace temporary message with real messages from backend
+      // STEP 3: Replace temporary with confirmed messages from backend
       if (response.userMessage && response.aiMessage) {
-        const userMsg = response.userMessage;
-        const aiMsg = response.aiMessage;
-
-        console.log('🔄 STEP 5: Replacing temporary with real messages');
-        console.log('   User message from backend:', {
-          id: userMsg.id,
-          sender: userMsg.sender_type,
-          content: userMsg.content.substring(0, 30),
-          created_at: userMsg.created_at
-        });
-        console.log('   AI message from backend:', {
-          id: aiMsg.id,
-          sender: aiMsg.sender_type,
-          content: aiMsg.content.substring(0, 30),
-          created_at: aiMsg.created_at
-        });
-
-        // Ensure user message always has earlier timestamp than AI message
-        const userTime = new Date(userMsg.created_at).getTime();
-        const aiTime = new Date(aiMsg.created_at).getTime();
-
-        console.log('⏰ STEP 6: Timestamp comparison');
-        console.log('   User timestamp:', userTime);
-        console.log('   AI timestamp:', aiTime);
-        console.log('   Difference (ms):', aiTime - userTime);
-
-        if (aiTime <= userTime) {
-          console.error('❌ BACKEND BUG DETECTED: AI timestamp is earlier than user timestamp!');
-          console.log('   Original user time:', userMsg.created_at);
-          console.log('   Original AI time:', aiMsg.created_at);
-          aiMsg.created_at = new Date(userTime + 1000).toISOString();
-          console.log('   ✅ Fixed AI time to:', aiMsg.created_at);
-        } else {
-          console.log('   ✅ Timestamps are correct (AI is after User)');
-        }
-
         setMessages(prev => {
-          console.log('   Previous state (with temp):', prev.length);
-
-          // Remove the temporary message
+          // Remove temporary message
           const withoutTemp = prev.filter(m => m.id !== tempId);
-          console.log('   After removing temp:', withoutTemp.length);
 
-          // Add real messages from backend
-          const combined = [...withoutTemp, userMsg, aiMsg];
-          console.log('   After adding real messages:', combined.length);
-
-          // Sort all messages by timestamp (oldest first)
-          const sorted = combined.sort((a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          );
-
-          console.log('   ✅ Final sorted order:', sorted.map((m, i) => ({
-            index: i,
-            id: m.id,
-            sender: m.sender_type,
-            content: m.content.substring(0, 20),
-            temporary: (m as any).temporary || false
-          })));
-
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          return sorted;
+          // Add both confirmed messages (user + AI)
+          return [...withoutTemp, response.userMessage, response.aiMessage];
         });
 
-        // Scroll to bottom after adding messages
+        console.log('✅ DONE: Replaced temp with confirmed messages');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+        // Scroll to bottom
         setTimeout(() => scrollToBottom('smooth'), 100);
       } else {
-        // Fallback: reload all messages if response format is unexpected
-        console.log('⚠️ Unexpected response format, reloading all messages');
+        // Fallback: reload all messages
+        console.log('⚠️ Unexpected response, reloading messages');
         await loadMessages();
       }
     } catch (error) {
-      console.error('❌ STEP ERROR: Send failed:', error);
+      console.error('❌ ERROR: Send failed:', error);
 
-      // Clear timeout on error
+      // Clear timeout
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      setSendTimestamp(null);
 
-      // Check if this is a message limit error (403)
+      // Check if message limit error
       const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
       if (errorMessage.includes('access denied') || errorMessage.includes('permission')) {
-        console.log('🚫 Message limit error detected - showing upgrade modal');
+        console.log('🚫 Message limit reached');
 
         // Remove temporary message
         setMessages(prev => prev.filter(m => m.id !== tempId));
 
-        // Show upgrade modal for message limit errors
+        // Show upgrade modal
         setShowUpgradeModal(true);
-        // Don't restore message - user can try again after upgrading
       } else {
-        console.log('⚠️ Other error - marking message as failed');
+        console.log('⚠️ Other error - showing retry');
 
-        // Mark temporary message as failed (keep it visible with retry option)
+        // Mark message as failed
         setMessages(prev =>
           prev.map(m =>
-            m.id === tempId
-              ? { ...m, temporary: false as any, failed: true as any }
-              : m
+            m.id === tempId ? { ...m, temporary: false as any, failed: true as any } : m
           )
         );
 
-        // Show timeout UI for other errors
         setShowTimeout(true);
-
-        // Add system message for error
-        setMessages(prev => [...prev, {
-          id: `system-${Date.now()}` as any,
-          conversation_id: conversationId,
-          sender_type: 'system' as any,
-          content: 'Something went wrong. Please try again.',
-          created_at: new Date().toISOString()
-        }]);
       }
     } finally {
       setSending(false);
     }
   };
 
-  // Handle send button click - adds message to queue
-  const handleSendMessage = () => {
-    console.log('=== HANDLE SEND MESSAGE ===');
-    console.log('Input:', messageInput);
-    console.log('Is processing:', isProcessingQueue);
-    console.log('Current queue length:', messageQueue.length);
-
-    const content = messageInput.trim();
-
-    // Guard: Don't send if empty or already processing
-    if (!content || isProcessingQueue) {
-      console.log('BLOCKED: empty content or already processing');
-      return;
-    }
-
-    // Clear input immediately
-    setMessageInput('');
-
-    // Add to queue
-    console.log('Adding to queue:', content);
-    setMessageQueue(prev => [...prev, content]);
-  };
-
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setShowTimeout(false);
     setMessageInput(lastMessage);
-    handleSendMessage();
+    // Wait a tick for state to update, then send
+    setTimeout(() => handleSendMessage(), 10);
   };
 
   const dismissActionTip = () => {
@@ -400,14 +270,15 @@ function ChatPageContent() {
     // Shift+Enter allows multiline (default textarea behavior)
   };
 
+  // FIXED: Parse and style asterisks as purple actions
   const renderMessageText = (text: string) => {
-    const parts = text.split(/(\*.*?\*)/g);
+    const parts = text.split(/(\*[^*]+\*)/g);
     return parts.map((part, idx) => {
       if (part.startsWith('*') && part.endsWith('*')) {
         return (
-          <span key={idx} style={{ color: '#988dfc', fontStyle: 'italic' }}>
+          <em key={idx} style={{ color: '#A78BFA', fontStyle: 'normal' }}>
             {part}
-          </span>
+          </em>
         );
       }
       return <span key={idx}>{part}</span>;
@@ -632,7 +503,7 @@ function ChatPageContent() {
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
-          padding: '20px 16px 200px' // Extra bottom padding for input + nav bar
+          padding: '20px 16px 128px' // FIXED: pb-32 (128px) so last message visible above input
         }}
       >
         {/* Disclaimer */}
@@ -789,17 +660,17 @@ function ChatPageContent() {
             }}
           >
             <div style={{ maxWidth: msg.sender_type === 'user' ? '273px' : '100%' }}>
-              {/* Message Bubble */}
+              {/* Message Bubble - FIXED: Proper padding (px-4 py-2 = 16px 8px) and word-break */}
               <div style={{
-                padding: '12px 20px',
+                padding: '8px 16px', // Changed from 12px 20px to match Candy.AI (py-2 px-4)
                 borderRadius: '24px',
                 marginBottom: '8px',
                 ...(msg.sender_type === 'ai' ? {
-                  background: '#fe3895',
-                  color: '#202124',
+                  background: '#fe3895', // Pink for AI
+                  color: '#202124', // Dark text
                   borderBottomLeftRadius: '4px'
                 } : {
-                  background: '#3B82F6', // Solid blue instead of gradient
+                  background: '#3B82F6', // Solid blue for user
                   color: 'white',
                   borderBottomRightRadius: '4px',
                   // Dim temporary messages to show they're being sent
@@ -808,9 +679,10 @@ function ChatPageContent() {
                 fontFamily: 'Roboto, sans-serif',
                 fontSize: '15px',
                 lineHeight: '1.4',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-                whiteSpace: 'pre-wrap'
+                // FIXED: Proper word breaking to prevent overflow
+                wordBreak: 'break-word' as const,
+                overflowWrap: 'break-word' as const,
+                whiteSpace: 'pre-wrap' as const
               }}>
                 {renderMessageText(msg.content)}
               </div>
@@ -897,7 +769,7 @@ function ChatPageContent() {
           )
         )}
 
-        {/* Typing indicator */}
+        {/* FIXED: Typing indicator - shows "Name..." */}
         {sending && !showTimeout && (
           <div style={{
             maxWidth: '273px',
@@ -906,17 +778,17 @@ function ChatPageContent() {
             <div style={{
               padding: '8px 16px',
               borderRadius: '24px',
-              background: '#fe3895',
-              color: '#202124',
+              background: 'rgba(254, 56, 149, 0.2)', // Lighter pink background
+              color: '#fe3895',
               borderBottomLeftRadius: '4px',
               fontFamily: 'Roboto, sans-serif',
-              fontSize: '16px',
+              fontSize: '14px',
               lineHeight: '21px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
-              <span>{character?.name || 'AI'}...</span>
+              <span style={{ fontWeight: 500 }}>{character?.name || 'AI'}...</span>
               <span style={{
                 display: 'inline-flex',
                 gap: '3px',
@@ -926,7 +798,7 @@ function ChatPageContent() {
                   width: '6px',
                   height: '6px',
                   borderRadius: '50%',
-                  background: '#202124',
+                  background: '#fe3895',
                   animation: 'typingDot 1.4s infinite',
                   animationDelay: '0s'
                 }} />
@@ -934,7 +806,7 @@ function ChatPageContent() {
                   width: '6px',
                   height: '6px',
                   borderRadius: '50%',
-                  background: '#202124',
+                  background: '#fe3895',
                   animation: 'typingDot 1.4s infinite',
                   animationDelay: '0.2s'
                 }} />
@@ -942,7 +814,7 @@ function ChatPageContent() {
                   width: '6px',
                   height: '6px',
                   borderRadius: '50%',
-                  background: '#202124',
+                  background: '#fe3895',
                   animation: 'typingDot 1.4s infinite',
                   animationDelay: '0.4s'
                 }} />
@@ -1061,7 +933,7 @@ function ChatPageContent() {
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={isProcessingQueue}
+            disabled={sending}
             placeholder="Say something or *do something*..."
             autoComplete="off"
             style={{
@@ -1072,20 +944,20 @@ function ChatPageContent() {
               fontFamily: 'Inter, sans-serif',
               fontSize: '14px',
               outline: 'none',
-              opacity: isProcessingQueue ? 0.5 : 1
+              opacity: sending ? 0.5 : 1
             }}
           />
           <button
             onClick={handleSendMessage}
-            disabled={isProcessingQueue || !messageInput.trim()}
+            disabled={sending || !messageInput.trim()}
             style={{
               width: '35px',
               height: '35px',
               background: 'none',
               border: 'none',
               padding: 0,
-              cursor: isProcessingQueue || !messageInput.trim() ? 'not-allowed' : 'pointer',
-              opacity: isProcessingQueue || !messageInput.trim() ? 0.5 : 1,
+              cursor: sending || !messageInput.trim() ? 'not-allowed' : 'pointer',
+              opacity: sending || !messageInput.trim() ? 0.5 : 1,
               transition: 'opacity 0.2s ease'
             }}
           >
