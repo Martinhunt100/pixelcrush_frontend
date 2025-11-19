@@ -66,6 +66,16 @@ export interface Conversation {
   user_id: string;
   created_at: string;
   updated_at: string;
+  character?: {
+    id: string | number;
+    name: string;
+    image?: string;
+    avatar_url?: string;
+    age?: number;
+  };
+  last_message?: string;
+  message_count?: number;
+  model?: string;
 }
 
 export interface Message {

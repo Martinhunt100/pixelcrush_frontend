@@ -1,76 +1,130 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { chatAPI } from '@/lib/api';
+import type { Conversation } from '@/lib/types';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
-export default function ChatLandingPage() {
+function ChatLandingContent() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const chats = [
-    {
-      id: 'paige-grey',
-      name: 'Paige Grey',
-      preview: "I usually don't go out or talk to...",
-      time: '4:47PM',
-      avatar: 'https://www.figma.com/api/mcp/asset/fe87f0c9-07a7-43e8-af45-605840735bd3'
-    },
-    {
-      id: 'katarina-sommerfeld',
-      name: 'Katarina Sommerfeld',
-      preview: "Hallo! You're not from around...",
-      time: '5:24PM',
-      avatar: 'https://www.figma.com/api/mcp/asset/728fc790-a90a-4acf-a017-be330f3156f7'
-    },
-    {
-      id: 'lila-crazy',
-      name: 'Lila Crazy',
-      preview: "Well, if you're looking for somet...",
-      time: '2:32PM',
-      avatar: 'https://www.figma.com/api/mcp/asset/2c7a16b9-ce7c-4520-820f-3970137843bd'
-    },
-    {
-      id: 'luna-moreno',
-      name: 'Luna Moreno',
-      preview: 'Oh! Sorry, I was lost in this pas...',
-      time: '7:18PM',
-      avatar: 'https://www.figma.com/api/mcp/asset/29cf0eca-6774-40cc-a75c-4c1f82086447'
-    },
-    {
-      id: 'lyra-fallon',
-      name: 'Lyra Fallon',
-      preview: "You don't look like someone w...",
-      time: '1:28PM',
-      avatar: 'https://www.figma.com/api/mcp/asset/c89e37df-de01-43f4-a88e-4cec04df0e86'
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await chatAPI.getConversations();
+
+      console.log('📨 Loaded conversations:', data);
+
+      // Sort by most recent first (updated_at)
+      const sorted = (Array.isArray(data) ? data : []).sort((a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+
+      setConversations(sorted);
+    } catch (err) {
+      console.error('Failed to load conversations:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load conversations');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const filteredChats = chats.filter(chat => 
-    chat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chat.preview.toLowerCase().includes(searchTerm.toLowerCase())
+  const openConversation = (conversation: Conversation) => {
+    // Navigate to chat page with both conversationId and characterId
+    router.push(`/chat?conversationId=${conversation.id}&characterId=${conversation.character_id}`);
+  };
+
+  const startNewChat = () => {
+    router.push('/'); // Homepage with character selection
+  };
+
+  const filteredConversations = conversations.filter(conv =>
+    conv.character?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.last_message?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleOpenChat = (characterSlug) => {
-    window.location.href = `/chat?character=${characterSlug}`;
+  // Helper function for timestamps
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const handleMarkAsRead = (e, characterSlug) => {
-    e.stopPropagation();
-    console.log('Marking as read:', characterSlug);
-  };
+  if (loading) {
+    return (
+      <div style={{
+        fontFamily: "'Poppins', sans-serif",
+        background: '#131313',
+        color: 'white',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
+          <div style={{ color: 'rgba(255,255,255,0.6)' }}>Loading your chats...</div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleDeleteChat = (e, characterSlug) => {
-    e.stopPropagation();
-    if (confirm('Are you sure you want to delete this chat?')) {
-      console.log('Deleting chat:', characterSlug);
-    }
-  };
-
-  const handleStartNewChat = () => {
-    window.location.href = '/';
-  };
-
-  const handleOpenTokens = () => {
-    window.location.href = '/tokens';
-  };
+  if (error) {
+    return (
+      <div style={{
+        fontFamily: "'Poppins', sans-serif",
+        background: '#131313',
+        color: 'white',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center', padding: '24px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
+          <div style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>{error}</div>
+          <button
+            onClick={loadConversations}
+            style={{
+              marginTop: '16px',
+              padding: '12px 24px',
+              background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'inherit'
+            }}
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -99,40 +153,28 @@ export default function ChatLandingPage() {
         zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
-<a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
-            <img 
-              src="/icons/logo.png"
-              alt="PixelCrush.ai"
-              style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
-            />
-          </a>
-          <a 
-            href="/tokens"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6.593px 16.593px',
-              border: '1px solid rgba(255,255,255,0.8)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none'
-            }}
-          >
-            <div style={{ width: '30px', height: '30px' }}>
-              <img 
-                src="/icons/token-icon.png"
-                alt="Tokens"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-            </div>
-            <div style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '16px',
-              lineHeight: '24px',
-              color: 'rgba(255,255,255,0.8)'
-            }}>0.8</div>
-          </a>
+        <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+          <img
+            src="/icons/logo.png"
+            alt="PixelCrush.ai"
+            style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
+          />
+        </a>
+        <a
+          href="/account"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px',
+            cursor: 'pointer',
+            textDecoration: 'none',
+            color: 'white',
+            fontSize: '20px'
+          }}
+        >
+          ⚙️
+        </a>
       </div>
 
       {/* Main Content */}
@@ -148,7 +190,6 @@ export default function ChatLandingPage() {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-        justifyContent: 'space-between',
             justifyContent: 'space-between',
             marginBottom: '24px'
           }}>
@@ -159,12 +200,12 @@ export default function ChatLandingPage() {
               lineHeight: '34px',
               color: 'white',
               margin: 0
-            }}>Chat</h1>
+            }}>Your Conversations</h1>
           </div>
 
           {/* Search */}
           <div style={{ marginBottom: '16px', position: 'relative' }}>
-            <svg 
+            <svg
               style={{
                 position: 'absolute',
                 left: '12px',
@@ -174,16 +215,16 @@ export default function ChatLandingPage() {
                 height: '20px',
                 opacity: 0.5
               }}
-              viewBox="0 0 20 20" 
-              fill="none" 
+              viewBox="0 0 20 20"
+              fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M19 19L14.65 14.65" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <input 
-              type="text" 
-              placeholder="Search for a profile..."
+            <input
+              type="text"
+              placeholder="Search conversations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
@@ -201,145 +242,168 @@ export default function ChatLandingPage() {
             />
           </div>
 
-          {/* Chat List */}
-          {filteredChats.length > 0 ? (
+          {/* Conversation List */}
+          {filteredConversations.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {filteredChats.map((chat) => (
-                <div 
-                  key={chat.id}
-                  onClick={() => handleOpenChat(chat.id)}
-                  style={{
-                    background: '#303030',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    marginBottom: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-        justifyContent: 'space-between',
-                    gap: '12px',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s ease',
-                    minHeight: '80px'
-                  }}
-                >
-                  <img 
-                    src={chat.avatar} 
-                    alt={chat.name}
-                    style={{
-                      width: '56px',
-                      height: '56px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      flexShrink: 0
-                    }}
-                  />
-                  <div style={{
-                    flex: 1,
-                    minWidth: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px'
-                  }}>
-                    <div style={{
-                      fontFamily: "'Poppins', sans-serif",
-                      fontWeight: 500,
-                      fontSize: '15px',
-                      lineHeight: '22px',
-                      color: 'white',
-                      margin: 0
-                    }}>{chat.name}</div>
-                    <div style={{
-                      fontFamily: "'Poppins', sans-serif",
-                      fontWeight: 400,
-                      fontSize: '14px',
-                      lineHeight: '20px',
-                      color: 'rgba(255,255,255,0.75)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      margin: 0
-                    }}>{chat.preview}</div>
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
-                    gap: '8px',
-                    flexShrink: 0
-                  }}>
-                    <div style={{
-                      fontFamily: "'Poppins', sans-serif",
-                      fontWeight: 300,
-                      fontSize: '13px',
-                      lineHeight: '20px',
-                      color: 'rgba(255,255,255,0.75)'
-                    }}>{chat.time}</div>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button 
-                        onClick={(e) => handleMarkAsRead(e, chat.id)}
-                        aria-label="Mark as read"
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '2px',
-                          opacity: 0.7,
-                          transition: 'opacity 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-        justifyContent: 'space-between',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13 3L6 10L3 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={(e) => handleDeleteChat(e, chat.id)}
-                        aria-label="Delete chat"
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '2px',
-                          opacity: 0.7,
-                          transition: 'opacity 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-        justifyContent: 'space-between',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M2 4H14M12.6667 4V13.3333C12.6667 14 12 14.6667 11.3333 14.6667H4.66667C4 14.6667 3.33333 14 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 2 6 1.33333 6.66667 1.33333H9.33333C10 1.33333 10.6667 2 10.6667 2.66667V4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              {filteredConversations.map((conv) => {
+                // Get character image - try multiple field names for compatibility
+                const characterImage = conv.character?.image ||
+                                     conv.character?.avatar_url ||
+                                     '/icons/default-avatar.png';
+                const characterName = conv.character?.name || 'Unknown Character';
+                const lastMessagePreview = conv.last_message
+                  ? (conv.last_message.length > 60
+                      ? conv.last_message.substring(0, 60) + '...'
+                      : conv.last_message)
+                  : 'Start chatting...';
 
-              {/* New Chat Item */}
-              <div 
-                onClick={handleStartNewChat}
+                return (
+                  <button
+                    key={conv.id}
+                    onClick={() => openConversation(conv)}
+                    style={{
+                      background: '#303030',
+                      borderRadius: '10px',
+                      padding: '12px',
+                      marginBottom: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, background 0.2s ease',
+                      minHeight: '80px',
+                      border: 'none',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#3a3a3a';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#303030';
+                    }}
+                  >
+                    {/* Character Avatar */}
+                    <img
+                      src={characterImage}
+                      alt={characterName}
+                      style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        flexShrink: 0
+                      }}
+                      onError={(e) => {
+                        // Fallback to default avatar if image fails to load
+                        e.currentTarget.src = '/icons/default-avatar.png';
+                      }}
+                    />
+
+                    {/* Conversation Info */}
+                    <div style={{
+                      flex: 1,
+                      minWidth: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '2px'
+                      }}>
+                        <h3 style={{
+                          fontFamily: "'Poppins', sans-serif",
+                          fontWeight: 500,
+                          fontSize: '15px',
+                          lineHeight: '22px',
+                          color: 'white',
+                          margin: 0,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {characterName}
+                        </h3>
+                        <span style={{
+                          fontFamily: "'Poppins', sans-serif",
+                          fontWeight: 300,
+                          fontSize: '13px',
+                          lineHeight: '20px',
+                          color: 'rgba(255,255,255,0.5)',
+                          flexShrink: 0,
+                          marginLeft: '8px'
+                        }}>
+                          {formatTimestamp(conv.updated_at)}
+                        </span>
+                      </div>
+
+                      <p style={{
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: 400,
+                        fontSize: '14px',
+                        lineHeight: '20px',
+                        color: 'rgba(255,255,255,0.65)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        margin: 0
+                      }}>
+                        {lastMessagePreview}
+                      </p>
+
+                      {/* Message Count */}
+                      {conv.message_count !== undefined && (
+                        <div style={{
+                          fontFamily: "'Poppins', sans-serif",
+                          fontSize: '12px',
+                          color: 'rgba(255,255,255,0.4)',
+                          marginTop: '2px'
+                        }}>
+                          {conv.message_count} {conv.message_count === 1 ? 'message' : 'messages'}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Arrow */}
+                    <div style={{
+                      flexShrink: 0,
+                      fontSize: '18px',
+                      color: 'rgba(255,255,255,0.4)'
+                    }}>
+                      →
+                    </div>
+                  </button>
+                );
+              })}
+
+              {/* New Chat Button */}
+              <button
+                onClick={startNewChat}
                 style={{
                   background: '#303030',
                   borderRadius: '10px',
                   padding: '12px',
-                  marginBottom: '12px',
+                  marginTop: '8px',
                   display: 'flex',
                   alignItems: 'center',
-        justifyContent: 'space-between',
                   gap: '12px',
                   cursor: 'pointer',
-                  transition: 'transform 0.2s ease',
+                  transition: 'all 0.2s ease',
                   border: '2px dashed rgba(255,255,255,0.3)',
-                  minHeight: '80px'
+                  minHeight: '80px',
+                  width: '100%',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#3a3a3a';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#303030';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
                 }}
               >
                 <div style={{
@@ -349,11 +413,12 @@ export default function ChatLandingPage() {
                   background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 50%, #4A90E2 100%)',
                   display: 'flex',
                   alignItems: 'center',
-        justifyContent: 'space-between',
                   justifyContent: 'center',
                   fontSize: '24px',
                   flexShrink: 0
-                }}>➕</div>
+                }}>
+                  ➕
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontFamily: "'Poppins', sans-serif",
@@ -361,20 +426,73 @@ export default function ChatLandingPage() {
                     fontSize: '15px',
                     lineHeight: '22px',
                     color: 'white'
-                  }}>Start a new chat by clicking here and selecting a new character</div>
+                  }}>
+                    Start New Chat
+                  </div>
+                  <div style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.6)',
+                    marginTop: '2px'
+                  }}>
+                    Browse characters and begin a conversation
+                  </div>
                 </div>
-              </div>
+              </button>
             </div>
           ) : (
+            /* Empty State */
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <div style={{ fontSize: '64px', marginBottom: '16px', opacity: 0.3 }}>💬</div>
-              <div style={{
+              <h2 style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontSize: '20px',
+                fontWeight: 600,
+                lineHeight: '28px',
+                color: 'white',
+                marginBottom: '8px'
+              }}>
+                {searchTerm ? 'No conversations found' : 'No conversations yet'}
+              </h2>
+              <p style={{
                 fontFamily: "'Poppins', sans-serif",
                 fontSize: '16px',
                 lineHeight: '24px',
                 color: 'rgba(255,255,255,0.5)',
-                margin: 0
-              }}>No chats found. Try a different search!</div>
+                margin: '0 0 24px 0'
+              }}>
+                {searchTerm
+                  ? 'Try a different search term'
+                  : 'Start chatting with your favorite characters'}
+              </p>
+              {!searchTerm && (
+                <button
+                  onClick={startNewChat}
+                  style={{
+                    padding: '14px 32px',
+                    background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    boxShadow: '0 4px 12px rgba(255, 59, 154, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(255, 59, 154, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 59, 154, 0.3)';
+                  }}
+                >
+                  Browse Characters
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -392,15 +510,15 @@ export default function ChatLandingPage() {
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        justifyContent: 'space-between',
         padding: '8px 12px 8px',
-        zIndex: 100
+        zIndex: 100,
+        maxWidth: '393px',
+        margin: '0 auto'
       }}>
         <a href="/" style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
           gap: '4px',
@@ -421,7 +539,6 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'white',
           gap: '4px'
@@ -440,7 +557,6 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
           gap: '4px',
@@ -460,7 +576,6 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
           gap: '4px',
@@ -480,7 +595,6 @@ export default function ChatLandingPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-        justifyContent: 'space-between',
           textDecoration: 'none',
           color: 'rgba(255,255,255,0.7)',
           gap: '4px',
@@ -497,5 +611,13 @@ export default function ChatLandingPage() {
         </a>
       </div>
     </div>
+  );
+}
+
+export default function ChatLandingPage() {
+  return (
+    <ProtectedRoute>
+      <ChatLandingContent />
+    </ProtectedRoute>
   );
 }
