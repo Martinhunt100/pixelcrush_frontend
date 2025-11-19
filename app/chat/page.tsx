@@ -13,6 +13,9 @@ function ChatPageContent() {
   const characterId = searchParams.get('characterId');
 
   const [messageInput, setMessageInput] = useState('');
+
+  // DEBUG: Track component renders
+  console.log('=== CHAT COMPONENT RENDER ===');
   const [messages, setMessages] = useState<Message[]>([]);
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
@@ -140,20 +143,34 @@ function ChatPageContent() {
     return `${hours}:${minutes.toString().padStart(2, '0')}${ampm}`;
   };
 
-  // Process message queue one at a time
+  // Process message queue one at a time (FIXED - no while loop)
   const processQueue = async () => {
-    if (isProcessingQueue || messageQueue.length === 0) return;
+    console.log('=== PROCESS QUEUE ===');
+    console.log('Queue length:', messageQueue.length);
+    console.log('Is processing:', isProcessingQueue);
+
+    // Guard: Don't process if already processing or queue is empty
+    if (isProcessingQueue || messageQueue.length === 0) {
+      console.log('BLOCKED: already processing or queue empty');
+      return;
+    }
 
     setIsProcessingQueue(true);
 
-    while (messageQueue.length > 0) {
-      const nextMessage = messageQueue[0];
-      setMessageQueue(prev => prev.slice(1)); // Remove from queue
+    // Process ONLY the first message (not while loop)
+    const nextMessage = messageQueue[0];
+    console.log('Processing message:', nextMessage);
+
+    try {
+      // Remove from queue BEFORE sending to prevent re-processing
+      setMessageQueue(prev => prev.slice(1));
 
       await sendMessageToBackend(nextMessage);
+    } catch (error) {
+      console.error('Send failed:', error);
+    } finally {
+      setIsProcessingQueue(false);
     }
-
-    setIsProcessingQueue(false);
   };
 
   // Trigger queue processing when new messages are added
@@ -340,13 +357,24 @@ function ChatPageContent() {
 
   // Handle send button click - adds message to queue
   const handleSendMessage = () => {
+    console.log('=== HANDLE SEND MESSAGE ===');
+    console.log('Input:', messageInput);
+    console.log('Is processing:', isProcessingQueue);
+    console.log('Current queue length:', messageQueue.length);
+
     const content = messageInput.trim();
-    if (!content || isProcessingQueue) return;
+
+    // Guard: Don't send if empty or already processing
+    if (!content || isProcessingQueue) {
+      console.log('BLOCKED: empty content or already processing');
+      return;
+    }
 
     // Clear input immediately
     setMessageInput('');
 
     // Add to queue
+    console.log('Adding to queue:', content);
     setMessageQueue(prev => [...prev, content]);
   };
 
@@ -763,7 +791,7 @@ function ChatPageContent() {
             <div style={{ maxWidth: msg.sender_type === 'user' ? '273px' : '100%' }}>
               {/* Message Bubble */}
               <div style={{
-                padding: '8px 16px',
+                padding: '12px 20px',
                 borderRadius: '24px',
                 marginBottom: '8px',
                 ...(msg.sender_type === 'ai' ? {
@@ -771,15 +799,18 @@ function ChatPageContent() {
                   color: '#202124',
                   borderBottomLeftRadius: '4px'
                 } : {
-                  background: 'linear-gradient(90deg, #3d70fd 0%, #3d71ff 100%)',
+                  background: '#3B82F6', // Solid blue instead of gradient
                   color: 'white',
                   borderBottomRightRadius: '4px',
                   // Dim temporary messages to show they're being sent
                   opacity: (msg as any).temporary ? 0.7 : 1
                 }),
                 fontFamily: 'Roboto, sans-serif',
-                fontSize: '16px',
-                lineHeight: '21px'
+                fontSize: '15px',
+                lineHeight: '1.4',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
               }}>
                 {renderMessageText(msg.content)}
               </div>
@@ -885,7 +916,7 @@ function ChatPageContent() {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <span>{character?.name || 'AI'} is typing</span>
+              <span>{character?.name || 'AI'}...</span>
               <span style={{
                 display: 'inline-flex',
                 gap: '3px',
