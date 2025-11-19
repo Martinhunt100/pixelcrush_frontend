@@ -136,14 +136,29 @@ function ChatPageContent() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🚀 STEP 1: User clicked send');
     console.log('   Message content:', content);
-    console.log('   Current messages count:', messages.length);
-    console.log('   Last 3 messages:', messages.slice(-3).map(m => ({
-      sender: m.sender_type,
-      content: m.content.substring(0, 20)
-    })));
 
-    setSending(true);
+    // Generate temporary ID for optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const tempTimestamp = new Date().toISOString();
+
+    // STEP 2: Clear input and add message to UI IMMEDIATELY (optimistic update)
     setMessageInput('');
+
+    const optimisticUserMessage: Message = {
+      id: tempId as any,
+      conversation_id: conversationId,
+      content: content,
+      sender_type: 'user',
+      created_at: tempTimestamp,
+      temporary: true as any // Mark as temporary for visual feedback
+    };
+
+    console.log('⚡ STEP 2: Adding optimistic message INSTANTLY');
+    console.log('   Temp ID:', tempId);
+    console.log('   Current messages:', messages.length);
+
+    setMessages(prev => [...prev, optimisticUserMessage]);
+    setSending(true);
     setShowTimeout(false);
     setLastMessage(content);
     setSendTimestamp(Date.now());
@@ -158,13 +173,13 @@ function ChatPageContent() {
     }, 30000);
 
     try {
-      console.log('📡 STEP 2: Sending to API...');
+      console.log('📡 STEP 3: Sending to API (user already sees their message!)');
       console.log('   Endpoint: /api/chat/message');
       console.log('   Conversation ID:', conversationId);
 
       const response = await chatAPI.sendMessage(conversationId, content);
 
-      console.log('📬 STEP 3: API response received');
+      console.log('📬 STEP 4: API response received');
       console.log('   Full response:', response);
 
       // Clear timeout on successful response
@@ -172,82 +187,82 @@ function ChatPageContent() {
       setSendTimestamp(null);
       setShowTimeout(false);
 
-      // Add both user message and AI response to the messages
+      // STEP 5: Replace temporary message with real messages from backend
       if (response.userMessage && response.aiMessage) {
-        // FORCE correct order: user message first, then AI reply
-        // This ensures proper order even if backend timestamps are wrong
         const userMsg = response.userMessage;
         const aiMsg = response.aiMessage;
 
-        console.log('🔍 STEP 4: Analyzing response messages');
-        console.log('   User message:', {
+        console.log('🔄 STEP 5: Replacing temporary with real messages');
+        console.log('   User message from backend:', {
           id: userMsg.id,
           sender: userMsg.sender_type,
           content: userMsg.content.substring(0, 30),
-          created_at: userMsg.created_at,
-          timestamp_ms: new Date(userMsg.created_at).getTime()
+          created_at: userMsg.created_at
         });
-        console.log('   AI message:', {
+        console.log('   AI message from backend:', {
           id: aiMsg.id,
           sender: aiMsg.sender_type,
           content: aiMsg.content.substring(0, 30),
-          created_at: aiMsg.created_at,
-          timestamp_ms: new Date(aiMsg.created_at).getTime()
+          created_at: aiMsg.created_at
         });
 
         // Ensure user message always has earlier timestamp than AI message
         const userTime = new Date(userMsg.created_at).getTime();
         const aiTime = new Date(aiMsg.created_at).getTime();
 
-        console.log('⏰ STEP 5: Timestamp comparison');
+        console.log('⏰ STEP 6: Timestamp comparison');
         console.log('   User timestamp:', userTime);
         console.log('   AI timestamp:', aiTime);
         console.log('   Difference (ms):', aiTime - userTime);
 
         if (aiTime <= userTime) {
-          // Backend bug: AI timestamp is earlier/same - force correct order
           console.error('❌ BACKEND BUG DETECTED: AI timestamp is earlier than user timestamp!');
           console.log('   Original user time:', userMsg.created_at);
           console.log('   Original AI time:', aiMsg.created_at);
-          aiMsg.created_at = new Date(userTime + 1000).toISOString(); // AI 1 second after user
+          aiMsg.created_at = new Date(userTime + 1000).toISOString();
           console.log('   ✅ Fixed AI time to:', aiMsg.created_at);
         } else {
           console.log('   ✅ Timestamps are correct (AI is after User)');
         }
 
-        console.log('🔄 STEP 6: Adding to messages state');
-        console.log('   Current state has:', messages.length, 'messages');
-
         setMessages(prev => {
-          console.log('   Previous state length:', prev.length);
-          const combined = [...prev, userMsg, aiMsg];
-          console.log('   Combined length (prev + 2 new):', combined.length);
+          console.log('   Previous state (with temp):', prev.length);
 
-          // Sort all messages by timestamp (now guaranteed correct)
+          // Remove the temporary message
+          const withoutTemp = prev.filter(m => m.id !== tempId);
+          console.log('   After removing temp:', withoutTemp.length);
+
+          // Add real messages from backend
+          const combined = [...withoutTemp, userMsg, aiMsg];
+          console.log('   After adding real messages:', combined.length);
+
+          // Sort all messages by timestamp (oldest first)
           const sorted = combined.sort((a, b) =>
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
 
-          console.log('   ✅ Sorted messages (ALL):', sorted.map((m, i) => ({
+          console.log('   ✅ Final sorted order:', sorted.map((m, i) => ({
             index: i,
             id: m.id,
             sender: m.sender_type,
             content: m.content.substring(0, 20),
-            created_at: m.created_at
+            temporary: (m as any).temporary || false
           })));
 
           console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
           return sorted;
         });
 
-        // Scroll to bottom immediately after adding messages
+        // Scroll to bottom after adding messages
         setTimeout(() => scrollToBottom('smooth'), 100);
       } else {
-        // Fallback: reload messages if response format is unexpected
+        // Fallback: reload all messages if response format is unexpected
+        console.log('⚠️ Unexpected response format, reloading all messages');
         await loadMessages();
       }
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('❌ STEP ERROR: Send failed:', error);
+
       // Clear timeout on error
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setSendTimestamp(null);
@@ -255,10 +270,26 @@ function ChatPageContent() {
       // Check if this is a message limit error (403)
       const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
       if (errorMessage.includes('access denied') || errorMessage.includes('permission')) {
+        console.log('🚫 Message limit error detected - showing upgrade modal');
+
+        // Remove temporary message
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+
         // Show upgrade modal for message limit errors
         setShowUpgradeModal(true);
         setMessageInput(content); // Restore message so user can see what they tried to send
       } else {
+        console.log('⚠️ Other error - marking message as failed');
+
+        // Mark temporary message as failed (keep it visible with retry option)
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === tempId
+              ? { ...m, temporary: false as any, failed: true as any }
+              : m
+          )
+        );
+
         // Show timeout UI for other errors
         setShowTimeout(true);
       }
@@ -579,7 +610,9 @@ function ChatPageContent() {
                 } : {
                   background: 'linear-gradient(90deg, #3d70fd 0%, #3d71ff 100%)',
                   color: 'white',
-                  borderBottomRightRadius: '4px'
+                  borderBottomRightRadius: '4px',
+                  // Dim temporary messages to show they're being sent
+                  opacity: (msg as any).temporary ? 0.7 : 1
                 }),
                 fontFamily: 'Roboto, sans-serif',
                 fontSize: '16px',
@@ -609,13 +642,47 @@ function ChatPageContent() {
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '13px',
                   lineHeight: '20px',
-                  color: '#616162'
+                  color: '#616162',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}>
-                  {new Date(msg.created_at).toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                  })}
+                  <span>
+                    {new Date(msg.created_at).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </span>
+                  {/* Sending indicator */}
+                  {(msg as any).temporary && (
+                    <span style={{
+                      fontSize: '11px',
+                      color: '#4A90E2',
+                      fontStyle: 'italic'
+                    }}>
+                      Sending...
+                    </span>
+                  )}
+                  {/* Failed indicator */}
+                  {(msg as any).failed && (
+                    <span
+                      onClick={() => {
+                        // Retry sending
+                        setMessageInput(msg.content);
+                        handleSendMessage();
+                      }}
+                      style={{
+                        fontSize: '11px',
+                        color: '#FF3B9A',
+                        fontStyle: 'italic',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Failed - tap to retry
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
