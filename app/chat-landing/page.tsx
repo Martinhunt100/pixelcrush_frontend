@@ -12,19 +12,46 @@ function ChatLandingContent() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tokens, setTokens] = useState<number>(0);
 
   useEffect(() => {
     loadConversations();
+    loadUserTokens();
   }, []);
+
+  const loadUserTokens = async () => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${API_URL}/api/users/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTokens(data.user?.tokens_remaining || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch tokens:', error);
+      // Don't show error to user - tokens are optional
+    }
+  };
 
   const loadConversations = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      console.log('=== LOADING CONVERSATIONS ===');
+      console.log('Token exists:', !!localStorage.getItem('token'));
+
       const data = await chatAPI.getConversations();
 
-      console.log('📨 Loaded conversations:', data);
+      console.log('📨 API Response:', data);
+      console.log('📊 Conversation count:', Array.isArray(data) ? data.length : 0);
 
       // Sort by most recent first (updated_at)
       const sorted = (Array.isArray(data) ? data : []).sort((a, b) =>
@@ -32,9 +59,19 @@ function ChatLandingContent() {
       );
 
       setConversations(sorted);
+      console.log('✅ Conversations loaded successfully');
     } catch (err) {
-      console.error('Failed to load conversations:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load conversations');
+      console.error('❌ Failed to load conversations:', err);
+
+      // Provide helpful error messaging
+      let errorMsg = err instanceof Error ? err.message : 'Failed to load conversations';
+
+      // If it's a 404, the backend endpoint likely doesn't exist
+      if (errorMsg.includes('not found') || errorMsg.includes('404')) {
+        errorMsg = 'Conversation history unavailable. The backend endpoint may need to be created. Check browser console for details.';
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -101,26 +138,75 @@ function ChatLandingContent() {
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <div style={{ textAlign: 'center', padding: '24px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
-          <div style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>{error}</div>
-          <button
-            onClick={loadConversations}
-            style={{
+        <div style={{ textAlign: 'center', padding: '24px', maxWidth: '400px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+          <div style={{
+            color: 'rgba(255,255,255,0.9)',
+            marginBottom: '8px',
+            fontSize: '16px',
+            lineHeight: '24px'
+          }}>
+            {error}
+          </div>
+
+          {/* Show additional help if it's a 404 error */}
+          {error.includes('unavailable') && (
+            <div style={{
               marginTop: '16px',
-              padding: '12px 24px',
-              background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
-              border: 'none',
+              padding: '12px',
+              background: 'rgba(255,255,255,0.05)',
               borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: 'inherit'
-            }}
-          >
-            Try Again
-          </button>
+              fontSize: '13px',
+              color: 'rgba(255,255,255,0.6)',
+              lineHeight: '20px',
+              textAlign: 'left'
+            }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Debug Info:</strong>
+              <br />
+              • Open browser DevTools (F12)
+              <br />
+              • Check Network tab for the request
+              <br />
+              • Look for GET /api/conversations
+              <br />
+              • If it returns 404, backend needs the endpoint
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' }}>
+            <button
+              onClick={loadConversations}
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit'
+              }}
+            >
+              Try Again
+            </button>
+            <button
+              onClick={startNewChat}
+              style={{
+                padding: '12px 24px',
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit'
+              }}
+            >
+              Start New Chat
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -139,7 +225,7 @@ function ChatLandingContent() {
       flexDirection: 'column',
       position: 'relative'
     }}>
-      {/* Header */}
+      {/* Header - FIXED: Now shows token count + cog */}
       <div style={{
         background: '#131313',
         borderBottom: '0.593px solid #363636',
@@ -160,21 +246,67 @@ function ChatLandingContent() {
             style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
           />
         </a>
-        <a
-          href="/account"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            color: 'white',
-            fontSize: '20px'
-          }}
-        >
-          ⚙️
-        </a>
+
+        {/* Right side: Token count + Settings cog */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          {/* Token count box */}
+          <a
+            href="/tokens"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6.593px 16.593px',
+              border: '1px solid rgba(255,255,255,0.8)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              textDecoration: 'none'
+            }}
+          >
+            <div style={{ width: '30px', height: '30px' }}>
+              <img
+                src="/icons/token-icon.png"
+                alt="Tokens"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
+            <div style={{
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: '16px',
+              lineHeight: '24px',
+              color: 'rgba(255,255,255,0.8)'
+            }}>{tokens.toFixed(1)}</div>
+          </a>
+
+          {/* Settings cog */}
+          <a
+            href="/account"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '40px',
+              height: '40px',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: '20px',
+              transition: 'color 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+            }}
+          >
+            ⚙️
+          </a>
+        </div>
       </div>
 
       {/* Main Content */}
