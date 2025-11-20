@@ -1021,8 +1021,8 @@ function ChatPageContent() {
               src="/icons/send-button.png"
               alt="Send"
               style={{
-                width: '50%',
-                height: '50%',
+                width: '75%',
+                height: '75%',
                 objectFit: 'contain'
               }}
             />
