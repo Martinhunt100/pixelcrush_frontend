@@ -81,7 +81,15 @@ export interface Conversation {
 export interface Message {
   id: string;
   conversation_id: string;
-  sender_type: 'user' | 'ai';
+  sender: 'user' | 'ai' | 'character' | 'system';
+  modality?: string;
   content: string;
+  image_url?: string | null;
+  video_url?: string | null;
+  audio_url?: string | null;
+  audio_duration_ms?: number | null;
+  tokens_cost?: number;
   created_at: string;
+  temporary?: boolean;
+  failed?: boolean;
 }

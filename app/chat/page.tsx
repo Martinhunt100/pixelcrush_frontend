@@ -77,7 +77,7 @@ function ChatPageContent() {
       // DEBUG: Log message order before sorting
       console.log('📨 Messages from API (before sort):', messagesArray.map((m, i) => ({
         index: i,
-        sender: m.sender_type,
+        sender: m.sender,
         content: m.content.substring(0, 20),
         timestamp: m.created_at
       })));
@@ -90,7 +90,7 @@ function ChatPageContent() {
       // DEBUG: Log message order after sorting
       console.log('✅ Messages after sort:', sortedMessages.map((m, i) => ({
         index: i,
-        sender: m.sender_type,
+        sender: m.sender,
         content: m.content.substring(0, 20),
         timestamp: m.created_at
       })));
@@ -121,13 +121,13 @@ function ChatPageContent() {
     console.log('Is array:', Array.isArray(messages));
     if (messages.length > 0) {
       console.log('First message:', messages[0]);
-      console.log('First message sender_type:', messages[0].sender_type);
+      console.log('First message sender:', messages[0].sender);
       console.log('First message content:', messages[0].content);
     }
     console.log('   Order in state:', messages.map((m, i) => ({
       renderIndex: i,
       id: m.id,
-      sender: m.sender_type,
+      sender: m.sender,
       content: m.content.substring(0, 20)
     })));
     console.log('================================');
@@ -175,7 +175,7 @@ function ChatPageContent() {
       id: tempId as any,
       conversation_id: conversationId,
       content: content,
-      sender_type: 'user',
+      sender: 'user',
       created_at: new Date().toISOString(),
       temporary: true as any
     };
@@ -223,7 +223,7 @@ function ChatPageContent() {
             {
               id: `error-${Date.now()}` as any,
               conversation_id: conversationId,
-              sender_type: 'system' as any,
+              sender: 'system' as any,
               content: '⚠️ The AI had trouble responding. Please try sending your message again.',
               created_at: new Date().toISOString()
             }
@@ -701,11 +701,11 @@ function ChatPageContent() {
           (() => {
             console.log('📺 RENDERING MESSAGES TO DOM');
             console.log('   Messages array length:', messages.length);
-            console.log('   EXACT RENDER ORDER:', messages.map((m, i) => `${i}: ${m.sender_type} - ${m.content.substring(0, 20)}`));
+            console.log('   EXACT RENDER ORDER:', messages.map((m, i) => `${i}: ${m.sender} - ${m.content.substring(0, 20)}`));
             // FILTER OUT EMPTY AI MESSAGES before rendering
             return messages.filter(m => {
               // Keep user and system messages always
-              if (m.sender_type === 'user' || m.sender_type === 'system') {
+              if (m.sender === 'user' || m.sender === 'system') {
                 return true;
               }
               // For AI messages, filter out empty content
@@ -714,7 +714,7 @@ function ChatPageContent() {
           })().map((msg, idx) => {
             console.log(`🎯 Rendering message ${idx}:`, msg);
             console.log(`   - ID: ${msg.id}`);
-            console.log(`   - Sender: ${msg.sender_type}`);
+            console.log(`   - Sender: ${msg.sender}`);
             console.log(`   - Content: ${msg.content?.substring(0, 50)}...`);
 
             // Check message structure
@@ -729,7 +729,7 @@ function ChatPageContent() {
             }
 
             // System message - centered with special styling
-            if ((msg as any).sender_type === 'system') {
+            if ((msg as any).sender === 'system') {
               return (
                 <div
                   key={msg.id || idx}
@@ -755,7 +755,7 @@ function ChatPageContent() {
             }
 
             // USER MESSAGE COMPONENT
-            if (msg.sender_type === 'user') {
+            if (msg.sender === 'user') {
               return (
                 <div
                   key={msg.id || idx}
@@ -857,7 +857,7 @@ function ChatPageContent() {
             }
 
             // CHARACTER/ASSISTANT MESSAGE COMPONENT
-            if (msg.sender_type === 'ai' || msg.sender_type === 'character') {
+            if (msg.sender === 'ai' || msg.sender === 'character') {
               return (
                 <div
                   key={msg.id || idx}
@@ -956,9 +956,9 @@ function ChatPageContent() {
               <div
                 key={msg.id || i}
                 style={{
-                  background: msg.sender_type === 'user'
+                  background: msg.sender === 'user'
                     ? 'rgba(107, 82, 243, 0.3)'
-                    : msg.sender_type === 'system'
+                    : msg.sender === 'system'
                     ? 'rgba(128, 128, 128, 0.3)'
                     : 'rgba(238, 54, 174, 0.3)',
                   padding: '8px',
@@ -968,7 +968,7 @@ function ChatPageContent() {
                 }}
               >
                 <div style={{ color: '#fbbf24', fontSize: '10px' }}>
-                  #{i} | ID: {msg.id} | Type: {msg.sender_type}
+                  #{i} | ID: {msg.id} | Type: {msg.sender}
                 </div>
                 <div style={{ color: 'white', marginTop: '4px' }}>
                   {msg.content}
