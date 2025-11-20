@@ -661,9 +661,9 @@ function ChatPageContent() {
                     position: 'relative',
                     display: 'inline-flex',
                     flexDirection: 'column',
-                    gap: '9px',
+                    gap: '7px',
                     width: 'auto',
-                    maxWidth: '75%',
+                    maxWidth: '90%',
                     alignItems: 'flex-end'
                   }}>
                     {/* User Message Bubble - Purple/Blue with sharp bottom-right corner */}
@@ -671,6 +671,7 @@ function ChatPageContent() {
                       style={{
                         backgroundColor: 'rgba(107, 82, 243, 0.75)',
                         padding: '8px 16px',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
                         borderTopLeftRadius: '24px',
                         borderTopRightRadius: '24px',
                         borderBottomLeftRadius: '24px',
@@ -763,8 +764,8 @@ function ChatPageContent() {
                     position: 'relative',
                     display: 'inline-flex',
                     flexDirection: 'column',
-                    gap: '9px',
-                    maxWidth: '75%',
+                    gap: '7px',
+                    maxWidth: '90%',
                     alignItems: 'flex-start'
                   }}>
                     {/* Character Message Bubble - Pink with sharp bottom-left corner */}
@@ -772,6 +773,7 @@ function ChatPageContent() {
                       style={{
                         backgroundColor: 'rgba(238, 54, 174, 0.75)',
                         padding: '16px',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
                         borderTopLeftRadius: '24px',
                         borderTopRightRadius: '24px',
                         borderBottomRightRadius: '24px',
@@ -798,13 +800,11 @@ function ChatPageContent() {
                       alignItems: 'center',
                       gap: '8px'
                     }}>
-                      <div style={{ width: '34px', height: '29px' }}>
-                        <img
-                          src="/icons/voice-play.png"
-                          alt="Voice"
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        />
-                      </div>
+                      <img
+                        src="/icons/voice-play.png"
+                        alt="Voice"
+                        style={{ width: '40%', height: '40%', objectFit: 'contain' }}
+                      />
                     </div>
                   </div>
                 </div>
