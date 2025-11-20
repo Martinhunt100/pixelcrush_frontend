@@ -792,16 +792,17 @@ function ChatPageContent() {
                       </p>
                     </div>
 
-                    {/* Voice Play Icon (optional) */}
+                    {/* Voice Play Icon */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px'
+                      gap: '8px',
+                      height: '24px'
                     }}>
                       <img
                         src="/icons/voice-play.png"
                         alt="Voice"
-                        style={{ width: '40%', height: '40%', objectFit: 'contain' }}
+                        style={{ width: '24px', height: '24px', objectFit: 'contain' }}
                       />
                     </div>
                   </div>
