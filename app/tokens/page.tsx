@@ -1,10 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import TokenDisplay from '@/components/TokenDisplay';
 
 export default function TokensPage() {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [selectedPrice, setSelectedPrice] = useState(0);
+  const [tokens, setTokens] = useState<number | null>(null);
+
+  // Fetch tokens from API
+  useEffect(() => {
+    const fetchTokens = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) return;
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
+        const response = await fetch(`${apiUrl}/api/users/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const tokenCount = data.user?.tokens_remaining || data.tokens_remaining || data.user?.tokens || 0;
+          setTokens(tokenCount);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tokens:', error);
+      }
+    };
+
+    fetchTokens();
+  }, []);
+
+  // Format token number
+  const formatTokens = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toFixed(1);
+  };
 
   const packages = [
     { id: 'starter', amount: 50, price: 4.99, savings: null },
@@ -61,33 +95,7 @@ export default function TokensPage() {
               style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
             />
           </a>
-          <a 
-            href="/tokens"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6.593px 16.593px',
-              border: '1px solid rgba(255,255,255,0.8)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none'
-            }}
-          >
-            <div style={{ width: '30px', height: '30px' }}>
-              <img 
-                src="/icons/token-icon.png"
-                alt="Tokens"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-            </div>
-            <div style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '16px',
-              lineHeight: '24px',
-              color: 'rgba(255,255,255,0.8)'
-            }}>0.8</div>
-          </a>
+          <TokenDisplay />
       </div>
 
       {/* Main Content */}
@@ -124,12 +132,12 @@ export default function TokensPage() {
             justifyContent: 'center',
             gap: '12px'
           }}>
-            <img 
+            <img
               src="/icons/token-icon.png"
               alt="Token"
               style={{ width: '48px', height: '48px' }}
             />
-            <span>0.8</span>
+            <span>{tokens !== null ? formatTokens(tokens) : '...'}</span>
           </div>
         </div>
 

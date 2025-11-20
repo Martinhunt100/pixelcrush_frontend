@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import TokenDisplay from '@/components/TokenDisplay';
 
 export default function VoiceCallPage() {
   const [callActive, setCallActive] = useState(false);
@@ -98,33 +99,7 @@ export default function VoiceCallPage() {
               style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
             />
           </a>
-          <a 
-            href="/tokens"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6.593px 16.593px',
-              border: '1px solid rgba(255,255,255,0.8)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none'
-            }}
-          >
-            <div style={{ width: '30px', height: '30px' }}>
-              <img 
-                src="/icons/token-icon.png"
-                alt="Tokens"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-            </div>
-            <div style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '16px',
-              lineHeight: '24px',
-              color: 'rgba(255,255,255,0.8)'
-            }}>0.8</div>
-          </a>
+          <TokenDisplay />
       </div>
 
       {/* Main Content */}

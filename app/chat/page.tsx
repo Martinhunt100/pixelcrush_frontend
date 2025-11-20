@@ -6,6 +6,7 @@ import { chatAPI, characterAPI } from '@/lib/api';
 import type { Message, Character } from '@/lib/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UpgradeModal from '@/components/UpgradeModal';
+import TokenDisplay from '@/components/TokenDisplay';
 
 function ChatPageContent() {
   const searchParams = useSearchParams();
@@ -21,14 +22,6 @@ function ChatPageContent() {
   const [showTimeout, setShowTimeout] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  // Action tip education - shows once per user
-  const [showActionTip, setShowActionTip] = useState(() => {
-    // Check if user has seen tip before
-    if (typeof window !== 'undefined') {
-      return !localStorage.getItem('pixelcrush_action_tip_seen');
-    }
-    return true;
-  });
   // TODO: Set remainingMessages from backend response when available
   // Backend should return { remaining_messages: number } in chat API responses
   // Example: setRemainingMessages(response.remaining_messages)
@@ -232,13 +225,6 @@ function ChatPageContent() {
     setTimeout(() => handleSendMessage(), 10);
   };
 
-  const dismissActionTip = () => {
-    setShowActionTip(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('pixelcrush_action_tip_seen', 'true');
-    }
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     // Enter sends message, Shift+Enter adds new line
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -327,33 +313,7 @@ function ChatPageContent() {
             style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
           />
         </a>
-        <a
-          href="/tokens"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6.593px 16.593px',
-            border: '1px solid rgba(255,255,255,0.8)',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            textDecoration: 'none'
-          }}
-        >
-          <div style={{ width: '30px', height: '30px' }}>
-            <img
-              src="/icons/token-icon.png"
-              alt="Tokens"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
-          </div>
-          <div style={{
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: '16px',
-            lineHeight: '24px',
-            color: 'rgba(255,255,255,0.8)'
-          }}>0.8</div>
-        </a>
+        <TokenDisplay />
       </div>
 
       {/* Character Info Bar - Fixed below header */}
@@ -514,80 +474,6 @@ function ChatPageContent() {
             color: 'rgba(209, 209, 209, 0.79)'
           }}>Safe Chat Disclaimer</span>
         </div>
-
-        {/* Action Tip - Educational */}
-        {showActionTip && !loading && (
-          <div style={{
-            padding: '12px 16px',
-            background: 'linear-gradient(135deg, rgba(164,69,237,0.2) 0%, rgba(255,59,154,0.2) 100%)',
-            border: '1px solid rgba(164,69,237,0.3)',
-            borderRadius: '12px',
-            marginBottom: '16px',
-            animation: 'fadeIn 0.5s ease'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px'
-            }}>
-              <span style={{ fontSize: '24px' }}>✨</span>
-              <div style={{ flex: 1 }}>
-                <div style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: 'white',
-                  marginBottom: '6px'
-                }}>
-                  Express yourself with actions!
-                </div>
-                <div style={{
-                  fontFamily: 'Roboto, sans-serif',
-                  fontSize: '12px',
-                  color: 'rgba(255,255,255,0.85)',
-                  lineHeight: '18px',
-                  marginBottom: '8px'
-                }}>
-                  Type actions in asterisks to show what you're doing:
-                  <div style={{
-                    display: 'inline-block',
-                    marginTop: '6px',
-                    padding: '4px 8px',
-                    background: 'rgba(255,255,255,0.1)',
-                    borderRadius: '6px',
-                    fontFamily: 'monospace',
-                    color: '#FF3B9A',
-                    fontSize: '11px'
-                  }}>
-                    *smiles and moves closer*
-                  </div>
-                </div>
-                <button
-                  onClick={dismissActionTip}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#A445ED',
-                    fontSize: '11px',
-                    fontFamily: 'Poppins, sans-serif',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    padding: '4px 0',
-                    transition: 'color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#FF3B9A';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#A445ED';
-                  }}
-                >
-                  Got it! ✓
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Loading State */}
         {loading && (
