@@ -48,12 +48,3 @@ html body .chat-page-override div[id^="message_id_"] div p {
 .chat-page-override .assistant-message p {
   padding: 2.3px !important;
 }
-
-/* TEMPORARY DEBUG - REMOVE AFTER TESTING */
-.chat-page-override {
-  border: 5px solid red !important;
-}
-
-.chat-page-override p {
-  background: yellow !important;
-}
