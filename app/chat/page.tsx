@@ -13,9 +13,6 @@ function ChatPageContent() {
   const characterId = searchParams.get('characterId');
 
   const [messageInput, setMessageInput] = useState('');
-
-  // DEBUG: Track component renders
-  console.log('=== CHAT COMPONENT RENDER ===');
   const [messages, setMessages] = useState<Message[]>([]);
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,33 +64,16 @@ function ChatPageContent() {
     try {
       setLoading(true);
       const response = await chatAPI.getMessages(conversationId);
-      console.log('Messages response:', response);
 
       // Make sure we're setting an array
       const messagesArray = Array.isArray(response) ? response :
                            response.messages ? response.messages :
                            [];
 
-      // DEBUG: Log message order before sorting
-      console.log('📨 Messages from API (before sort):', messagesArray.map((m, i) => ({
-        index: i,
-        sender: m.sender,
-        content: m.content.substring(0, 20),
-        timestamp: m.created_at
-      })));
-
       // Sort messages by timestamp to ensure correct order (oldest first)
       const sortedMessages = messagesArray.sort((a: Message, b: Message) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
-
-      // DEBUG: Log message order after sorting
-      console.log('✅ Messages after sort:', sortedMessages.map((m, i) => ({
-        index: i,
-        sender: m.sender,
-        content: m.content.substring(0, 20),
-        timestamp: m.created_at
-      })));
 
       setMessages(sortedMessages);
 
@@ -112,25 +92,8 @@ function ChatPageContent() {
     messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
   };
 
-  // DEBUG: Track messages state changes
+  // Auto-scroll when messages change
   useEffect(() => {
-    console.log('=== MESSAGES STATE CHANGED ===');
-    console.log('Messages array:', messages);
-    console.log('Messages length:', messages.length);
-    console.log('Messages type:', typeof messages);
-    console.log('Is array:', Array.isArray(messages));
-    if (messages.length > 0) {
-      console.log('First message:', messages[0]);
-      console.log('First message sender:', messages[0].sender);
-      console.log('First message content:', messages[0].content);
-    }
-    console.log('   Order in state:', messages.map((m, i) => ({
-      renderIndex: i,
-      id: m.id,
-      sender: m.sender,
-      content: m.content.substring(0, 20)
-    })));
-    console.log('================================');
     scrollToBottom();
   }, [messages]);
 
@@ -156,13 +119,8 @@ function ChatPageContent() {
 
     // Guard: Don't send if empty, no conversation, or already sending
     if (!content || !conversationId || sending) {
-      console.log('BLOCKED: empty content, no conversation, or already sending');
       return;
     }
-
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🚀 TRUE OPTIMISTIC UI: Sending message');
-    console.log('   Content:', content);
 
     // Generate temporary ID for optimistic update
     const tempId = `temp-${Date.now()}`;
@@ -180,7 +138,6 @@ function ChatPageContent() {
       temporary: true as any
     };
 
-    console.log('⚡ INSTANT: Adding user message to DOM NOW');
     setMessages(prev => [...prev, optimisticUserMessage]); // USER SEES THEIR MESSAGE IMMEDIATELY!
     setSending(true);
     setShowTimeout(false);
@@ -194,11 +151,7 @@ function ChatPageContent() {
     }, 30000);
 
     try {
-      console.log('📡 BACKGROUND: Sending to API (user already sees their message)');
-
       const response = await chatAPI.sendMessage(conversationId, content);
-
-      console.log('📬 SUCCESS: API response received', response);
 
       // Clear timeout
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -210,9 +163,6 @@ function ChatPageContent() {
         const aiContent = response.aiMessage.content?.trim();
 
         if (!aiContent || aiContent.length === 0) {
-          console.error('⚠️ EMPTY AI RESPONSE DETECTED');
-          console.log('AI message object:', response.aiMessage);
-
           // Remove temporary message
           setMessages(prev => prev.filter(m => m.id !== tempId));
 
@@ -228,8 +178,6 @@ function ChatPageContent() {
               created_at: new Date().toISOString()
             }
           ]);
-
-          console.log('🔄 User can retry - input restored');
         } else {
           // Normal flow: AI response has content
           setMessages(prev => {
@@ -240,23 +188,15 @@ function ChatPageContent() {
             return [...withoutTemp, response.userMessage, response.aiMessage];
           });
 
-          console.log('✅ DONE: Replaced temp with confirmed messages');
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
           // Scroll to bottom
           setTimeout(() => scrollToBottom('smooth'), 100);
         }
       } else {
         // Fallback: reload all messages
-        console.log('⚠️ Unexpected response format, reloading messages');
-        console.log('Response structure:', {
-          hasUserMessage: !!response.userMessage,
-          hasAiMessage: !!response.aiMessage
-        });
         await loadMessages();
       }
     } catch (error) {
-      console.error('❌ ERROR: Send failed:', error);
+      console.error('Failed to send message:', error);
 
       // Clear timeout
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -264,15 +204,12 @@ function ChatPageContent() {
       // Check if message limit error
       const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
       if (errorMessage.includes('access denied') || errorMessage.includes('permission')) {
-        console.log('🚫 Message limit reached');
-
         // Remove temporary message
         setMessages(prev => prev.filter(m => m.id !== tempId));
 
         // Show upgrade modal
         setShowUpgradeModal(true);
       } else {
-        console.log('⚠️ Other error - showing retry');
 
         // Mark message as failed
         setMessages(prev =>
@@ -663,74 +600,26 @@ function ChatPageContent() {
           </div>
         )}
 
-        {/* DEBUG INFO PANEL - REMOVE AFTER FIXING */}
-        <div style={{
-          background: 'rgba(255, 0, 0, 0.2)',
-          border: '2px solid red',
-          padding: '16px',
-          marginBottom: '16px',
-          borderRadius: '8px',
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          color: 'white'
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#ff6b6b' }}>🔴 DEBUG INFO:</div>
-          <div>Loading: {loading ? 'YES' : 'NO'}</div>
-          <div>Messages length: {messages.length}</div>
-          <div>Messages type: {typeof messages}</div>
-          <div>Is array: {Array.isArray(messages) ? 'YES' : 'NO'}</div>
-          {messages.length > 0 && (
-            <>
-              <div style={{ marginTop: '8px', fontWeight: 'bold' }}>First message:</div>
-              <pre style={{
-                background: 'rgba(0,0,0,0.5)',
-                padding: '8px',
-                borderRadius: '4px',
-                fontSize: '10px',
-                overflow: 'auto',
-                maxHeight: '200px'
-              }}>
-                {JSON.stringify(messages[0], null, 2)}
-              </pre>
-            </>
-          )}
-        </div>
-
         {/* Messages */}
         {!loading && messages && messages.length > 0 ? (
-          (() => {
-            console.log('📺 RENDERING MESSAGES TO DOM');
-            console.log('   Messages array length:', messages.length);
-            console.log('   EXACT RENDER ORDER:', messages.map((m, i) => `${i}: ${m.sender} - ${m.content.substring(0, 20)}`));
-            // FILTER OUT EMPTY AI MESSAGES before rendering
-            return messages.filter(m => {
+          messages
+            .filter(m => {
               // Keep user and system messages always
               if (m.sender === 'user' || m.sender === 'system') {
                 return true;
               }
               // For AI messages, filter out empty content
               return m.content && m.content.trim().length > 0;
-            });
-          })().map((msg, idx) => {
-            console.log(`🎯 Rendering message ${idx}:`, msg);
-            console.log(`   - ID: ${msg.id}`);
-            console.log(`   - Sender: ${msg.sender}`);
-            console.log(`   - Content: ${msg.content?.substring(0, 50)}...`);
+            })
+            .map((msg, idx) => {
+              // Validate message structure
+              if (!msg || !msg.content) {
+                return null;
+              }
 
-            // Check message structure
-            if (!msg) {
-              console.error('❌ Message is null/undefined at index', idx);
-              return null;
-            }
-
-            if (!msg.content) {
-              console.warn('⚠️ Message has no content:', msg);
-              return null;
-            }
-
-            // System message - centered with special styling
-            if ((msg as any).sender === 'system') {
-              return (
+              // System message - centered with special styling
+              if (msg.sender === 'system') {
+                return (
                 <div
                   key={msg.id || idx}
                   style={{
@@ -936,49 +825,6 @@ function ChatPageContent() {
               No messages yet. Start the conversation!
             </div>
           )
-        )}
-
-        {/* SIMPLE DEBUG RENDERING - Shows all messages in basic format */}
-        {!loading && messages.length > 0 && (
-          <div style={{
-            background: 'rgba(0, 255, 0, 0.1)',
-            border: '2px solid green',
-            padding: '16px',
-            marginTop: '16px',
-            borderRadius: '8px',
-            fontFamily: 'monospace',
-            fontSize: '11px'
-          }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '12px', color: '#4ade80' }}>
-              🟢 SIMPLE DEBUG RENDERING ({messages.length} messages):
-            </div>
-            {messages.map((msg, i) => (
-              <div
-                key={msg.id || i}
-                style={{
-                  background: msg.sender === 'user'
-                    ? 'rgba(107, 82, 243, 0.3)'
-                    : msg.sender === 'system'
-                    ? 'rgba(128, 128, 128, 0.3)'
-                    : 'rgba(238, 54, 174, 0.3)',
-                  padding: '8px',
-                  marginBottom: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid rgba(255,255,255,0.2)'
-                }}
-              >
-                <div style={{ color: '#fbbf24', fontSize: '10px' }}>
-                  #{i} | ID: {msg.id} | Type: {msg.sender}
-                </div>
-                <div style={{ color: 'white', marginTop: '4px' }}>
-                  {msg.content}
-                </div>
-                <div style={{ color: '#94a3b8', fontSize: '9px', marginTop: '4px' }}>
-                  {new Date(msg.created_at).toLocaleTimeString()}
-                </div>
-              </div>
-            ))}
-          </div>
         )}
 
         {/* FIXED: Typing indicator - shows "Name..." */}
