@@ -277,7 +277,7 @@ function ChatPageContent() {
   }
 
   return (
-    <div style={{
+    <div className="chat-page" style={{
       fontFamily: 'Roboto, sans-serif',
       background: '#131313',
       color: '#D1D1D1',
@@ -1032,9 +1032,15 @@ function ChatPageContent() {
       />
 
       <style jsx>{`
+        /* Chat-page specific padding override */
+        :global(.chat-page *) {
+          padding: 2.3px !important;
+        }
+
         .layer-utilities {
           padding: 2.3px !important;
         }
+
         input::placeholder {
           color: white;
           opacity: 0.7;
