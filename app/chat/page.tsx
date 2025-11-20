@@ -661,7 +661,7 @@ function ChatPageContent() {
                     position: 'relative',
                     display: 'inline-flex',
                     flexDirection: 'column',
-                    gap: '9px',
+                    gap: '4px',
                     width: 'auto',
                     maxWidth: '75%',
                     alignItems: 'flex-end'
@@ -763,7 +763,7 @@ function ChatPageContent() {
                     position: 'relative',
                     display: 'inline-flex',
                     flexDirection: 'column',
-                    gap: '9px',
+                    gap: '4px',
                     maxWidth: '75%',
                     alignItems: 'flex-start'
                   }}>
