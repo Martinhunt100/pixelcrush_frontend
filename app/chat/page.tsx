@@ -661,9 +661,9 @@ function ChatPageContent() {
                     position: 'relative',
                     display: 'inline-flex',
                     flexDirection: 'column',
-                    gap: '7px',
+                    gap: '9px',
                     width: 'auto',
-                    maxWidth: '90%',
+                    maxWidth: '75%',
                     alignItems: 'flex-end'
                   }}>
                     {/* User Message Bubble - Purple/Blue with sharp bottom-right corner */}
@@ -671,7 +671,6 @@ function ChatPageContent() {
                       style={{
                         backgroundColor: 'rgba(107, 82, 243, 0.75)',
                         padding: '8px 16px',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
                         borderTopLeftRadius: '24px',
                         borderTopRightRadius: '24px',
                         borderBottomLeftRadius: '24px',
@@ -764,8 +763,8 @@ function ChatPageContent() {
                     position: 'relative',
                     display: 'inline-flex',
                     flexDirection: 'column',
-                    gap: '7px',
-                    maxWidth: '90%',
+                    gap: '9px',
+                    maxWidth: '75%',
                     alignItems: 'flex-start'
                   }}>
                     {/* Character Message Bubble - Pink with sharp bottom-left corner */}
@@ -773,7 +772,6 @@ function ChatPageContent() {
                       style={{
                         backgroundColor: 'rgba(238, 54, 174, 0.75)',
                         padding: '16px',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
                         borderTopLeftRadius: '24px',
                         borderTopRightRadius: '24px',
                         borderBottomRightRadius: '24px',
