@@ -7,6 +7,7 @@ import type { Message, Character } from '@/lib/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UpgradeModal from '@/components/UpgradeModal';
 import TokenDisplay from '@/components/TokenDisplay';
+import styles from './page.module.css';
 
 function ChatPageContent() {
   const searchParams = useSearchParams();
@@ -277,7 +278,7 @@ function ChatPageContent() {
   }
 
   return (
-    <div className="chat-page" style={{
+    <div className={styles.chatPage} style={{
       fontFamily: 'Roboto, sans-serif',
       background: '#131313',
       color: '#D1D1D1',
@@ -650,7 +651,7 @@ function ChatPageContent() {
                     display: 'inline-flex',
                     flexDirection: 'column',
                     gap: '4px',
-                    maxWidth: '75%',
+                    maxWidth: '90%',
                     alignItems: 'flex-start'
                   }}>
                     {/* Character Message Bubble - Pink with sharp bottom-left corner */}
@@ -678,7 +679,7 @@ function ChatPageContent() {
                       </p>
                     </div>
 
-                    {/* Voice Play Icon */}
+                    {/* Voice Play Icon with Timestamp */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -690,6 +691,13 @@ function ChatPageContent() {
                         alt="Voice"
                         style={{ width: '24px', height: '24px', objectFit: 'contain' }}
                       />
+                      <span style={{
+                        color: '#9CA3AF',
+                        fontSize: '13px',
+                        fontWeight: 'normal'
+                      }}>
+                        {formatTimeLabel(msg.created_at)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1032,19 +1040,6 @@ function ChatPageContent() {
       />
 
       <style jsx>{`
-        /* Chat-page specific padding override */
-        :global(.chat-page *) {
-          padding: 2.3px !important;
-        }
-
-        .layer-utilities {
-          padding: 2.3px !important;
-        }
-
-        input::placeholder {
-          color: white;
-          opacity: 0.7;
-        }
         @keyframes shimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }

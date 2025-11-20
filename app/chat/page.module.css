@@ -1,0 +1,9 @@
+/* Chat page specific styles */
+.chatPage * {
+  padding: 2.3px !important;
+}
+
+.chatPage input::placeholder {
+  color: white;
+  opacity: 0.7;
+}
