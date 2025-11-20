@@ -948,7 +948,7 @@ function ChatPageContent() {
           padding: '8px 16px',
           display: 'flex',
           alignItems: 'center',
-          gap: '12px'
+          gap: '2px'
         }}>
           <button
             onClick={() => alert('📷 Image attachment - Coming soon!')}
