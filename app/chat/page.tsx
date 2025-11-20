@@ -567,7 +567,7 @@ function ChatPageContent() {
                         opacity: (msg as any).temporary ? 0.7 : 1
                       }}
                     >
-                      <p style={{
+                      <p className="p-message" style={{
                         fontFamily: 'Roboto, sans-serif',
                         color: 'white',
                         fontSize: '15px',
@@ -667,7 +667,7 @@ function ChatPageContent() {
                       }}
                     >
                       {/* Message Text with Asterisk Parsing */}
-                      <p style={{
+                      <p className="p-message" style={{
                         fontFamily: 'Roboto, sans-serif',
                         color: '#E5E7EB',
                         fontSize: '15px',
