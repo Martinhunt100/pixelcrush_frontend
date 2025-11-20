@@ -25,7 +25,7 @@
   }
 }
 
-/* Chat page specific padding override */
-.chat-page-container * {
+/* Chat page message text only - target specific message elements */
+.chat-page-container [id^="message_id_"] p {
   padding: 2.3px !important;
 }
