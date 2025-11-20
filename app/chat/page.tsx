@@ -7,7 +7,6 @@ import type { Message, Character } from '@/lib/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UpgradeModal from '@/components/UpgradeModal';
 import TokenDisplay from '@/components/TokenDisplay';
-import styles from './page.module.css';
 
 function ChatPageContent() {
   const searchParams = useSearchParams();
@@ -278,7 +277,7 @@ function ChatPageContent() {
   }
 
   return (
-    <div className={styles.chatPage} style={{
+    <div className="chat-page-container" style={{
       fontFamily: 'Roboto, sans-serif',
       background: '#131313',
       color: '#D1D1D1',

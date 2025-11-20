@@ -24,3 +24,8 @@
     background: #131313 !important;
   }
 }
+
+/* Chat page specific padding override */
+.chat-page-container * {
+  padding: 2.3px !important;
+}
