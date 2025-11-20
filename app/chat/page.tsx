@@ -669,7 +669,7 @@ function ChatPageContent() {
                     {/* User Message Bubble - Purple/Blue with sharp bottom-right corner */}
                     <div
                       style={{
-                        backgroundColor: 'rgba(107, 82, 243, 0.75)',
+                        backgroundColor: 'rgba(107, 82, 243, 0.50)',
                         padding: '8px 16px',
                         borderTopLeftRadius: '24px',
                         borderTopRightRadius: '24px',
@@ -770,7 +770,7 @@ function ChatPageContent() {
                     {/* Character Message Bubble - Pink with sharp bottom-left corner */}
                     <div
                       style={{
-                        backgroundColor: 'rgba(238, 54, 174, 0.75)',
+                        backgroundColor: 'rgba(238, 54, 174, 0.50)',
                         padding: '16px',
                         borderTopLeftRadius: '24px',
                         borderTopRightRadius: '24px',
