@@ -24,3 +24,36 @@
     background: #131313 !important;
   }
 }
+
+/* ============================================
+   CHAT PAGE PADDING OVERRIDE
+   ============================================ */
+
+/* Override for message text on chat page only */
+.chat-page-override [id^="message_id_"] p {
+  padding: 2.3px !important;
+}
+
+/* Backup rule with higher specificity */
+html body .chat-page-override div[id^="message_id_"] div p {
+  padding: 2.3px !important;
+}
+
+/* Backup for user messages */
+.chat-page-override .user-message p {
+  padding: 2.3px !important;
+}
+
+/* Backup for assistant messages - if you have this class */
+.chat-page-override .assistant-message p {
+  padding: 2.3px !important;
+}
+
+/* TEMPORARY DEBUG - REMOVE AFTER TESTING */
+.chat-page-override {
+  border: 5px solid red !important;
+}
+
+.chat-page-override p {
+  background: yellow !important;
+}

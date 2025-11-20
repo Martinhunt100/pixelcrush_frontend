@@ -277,7 +277,7 @@ function ChatPageContent() {
   }
 
   return (
-    <div className="chat-page-container" style={{
+    <div className="chat-page-override" style={{
       fontFamily: 'Roboto, sans-serif',
       background: '#131313',
       color: '#D1D1D1',
