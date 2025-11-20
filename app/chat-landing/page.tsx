@@ -5,6 +5,19 @@ import { useRouter } from 'next/navigation';
 import { chatAPI } from '@/lib/api';
 import type { Conversation } from '@/lib/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import TokenDisplay from '@/components/TokenDisplay';
+
+// Group conversations by character
+interface CharacterGroup {
+  character: {
+    id: number;
+    name: string;
+    image: string;
+  };
+  conversations: Conversation[];
+  totalCount: number;
+  mostRecentDate: string;
+}
 
 function ChatLandingContent() {
   const router = useRouter();
@@ -12,52 +25,11 @@ function ChatLandingContent() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tokens, setTokens] = useState<number>(0);
+  const [selectedCharacterId, setSelectedCharacterId] = useState<number | null>(null);
 
   useEffect(() => {
     loadConversations();
-    loadUserTokens();
   }, []);
-
-  const loadUserTokens = async () => {
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
-      const token = localStorage.getItem('token');
-
-      console.log('=== LOADING USER TOKENS ===');
-      console.log('API URL:', API_URL);
-      console.log('Token exists:', !!token);
-
-      const response = await fetch(`${API_URL}/api/users/profile`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      console.log('Profile response status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📨 Profile data:', data);
-        console.log('🔍 Data structure:', {
-          hasUser: 'user' in data,
-          userKeys: data.user ? Object.keys(data.user) : [],
-          tokensRemaining: data.user?.tokens_remaining,
-          tokensRemainingType: typeof data.user?.tokens_remaining
-        });
-
-        const tokensValue = data.user?.tokens_remaining || 0;
-        console.log('💰 Setting tokens to:', tokensValue);
-
-        setTokens(tokensValue);
-      } else {
-        console.error('Profile request failed:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('❌ Failed to fetch tokens:', error);
-      // Don't show error to user - tokens are optional
-    }
-  };
 
   const loadConversations = async () => {
     try {
@@ -123,6 +95,50 @@ function ChatLandingContent() {
   const startNewChat = () => {
     router.push('/'); // Homepage with character selection
   };
+
+  // Group conversations by character
+  const characterGroups: CharacterGroup[] = conversations.reduce((groups, conv) => {
+    if (!conv.character) return groups;
+
+    const existingGroup = groups.find(g => g.character.id === conv.character_id);
+
+    if (existingGroup) {
+      existingGroup.conversations.push(conv);
+      existingGroup.totalCount++;
+      // Update most recent date if this conversation is newer
+      if (new Date(conv.updated_at) > new Date(existingGroup.mostRecentDate)) {
+        existingGroup.mostRecentDate = conv.updated_at;
+      }
+    } else {
+      groups.push({
+        character: {
+          id: conv.character_id,
+          name: conv.character.name,
+          image: conv.character.image || conv.character.avatar_url || '/icons/default-avatar.png'
+        },
+        conversations: [conv],
+        totalCount: 1,
+        mostRecentDate: conv.updated_at
+      });
+    }
+
+    return groups;
+  }, [] as CharacterGroup[]);
+
+  // Sort by most recent
+  characterGroups.sort((a, b) =>
+    new Date(b.mostRecentDate).getTime() - new Date(a.mostRecentDate).getTime()
+  );
+
+  // Get selected character's conversations
+  const selectedCharacterConversations = selectedCharacterId
+    ? characterGroups.find(g => g.character.id === selectedCharacterId)?.conversations || []
+    : [];
+
+  // Sort selected character's conversations by most recent
+  const sortedSelectedConversations = [...selectedCharacterConversations].sort((a, b) =>
+    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
 
   const filteredConversations = conversations.filter(conv =>
     conv.character?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -263,7 +279,7 @@ function ChatLandingContent() {
       flexDirection: 'column',
       position: 'relative'
     }}>
-      {/* Header - FIXED: Now shows token count + cog */}
+      {/* Header with back button and TokenDisplay */}
       <div style={{
         background: '#131313',
         borderBottom: '0.593px solid #363636',
@@ -277,13 +293,33 @@ function ChatLandingContent() {
         zIndex: 100,
         boxShadow: '0px 1px 0px 0px rgba(0,0,0,0.05)'
       }}>
-        <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
-          <img
-            src="/icons/logo.png"
-            alt="PixelCrush.ai"
-            style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
-          />
-        </a>
+        {/* Left side: Logo or Back button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {selectedCharacterId && (
+            <button
+              onClick={() => setSelectedCharacterId(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '24px',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              ←
+            </button>
+          )}
+          <a href="/" style={{ width: '87px', height: '37px', display: 'block' }}>
+            <img
+              src="/icons/logo.png"
+              alt="PixelCrush.ai"
+              style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
+            />
+          </a>
+        </div>
 
         {/* Right side: Token count + Settings cog */}
         <div style={{
@@ -291,34 +327,8 @@ function ChatLandingContent() {
           alignItems: 'center',
           gap: '12px'
         }}>
-          {/* Token count box */}
-          <a
-            href="/tokens"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6.593px 16.593px',
-              border: '1px solid rgba(255,255,255,0.8)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none'
-            }}
-          >
-            <div style={{ width: '30px', height: '30px' }}>
-              <img
-                src="/icons/token-icon.png"
-                alt="Tokens"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-            </div>
-            <div style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '16px',
-              lineHeight: '24px',
-              color: 'rgba(255,255,255,0.8)'
-            }}>{tokens.toFixed(1)}</div>
-          </a>
+          {/* Token Display Component */}
+          <TokenDisplay />
 
           {/* Settings cog */}
           <a
@@ -356,7 +366,7 @@ function ChatLandingContent() {
         WebkitOverflowScrolling: 'touch'
       }}>
         <div style={{ padding: '24px 12px' }}>
-          {/* Header */}
+          {/* Title */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -370,7 +380,12 @@ function ChatLandingContent() {
               lineHeight: '34px',
               color: 'white',
               margin: 0
-            }}>Your Conversations</h1>
+            }}>
+              {selectedCharacterId
+                ? characterGroups.find(g => g.character.id === selectedCharacterId)?.character.name
+                : 'Your Conversations'
+              }
+            </h1>
           </div>
 
           {/* Search */}
@@ -412,10 +427,233 @@ function ChatLandingContent() {
             />
           </div>
 
-          {/* Conversation List */}
-          {filteredConversations.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {filteredConversations.map((conv) => {
+          {/* Two-Stage Conversation List */}
+          {selectedCharacterId === null ? (
+            /* STAGE 1: Character Groups */
+            characterGroups.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {characterGroups.map((group) => (
+                  <button
+                    key={group.character.id}
+                    onClick={() => setSelectedCharacterId(group.character.id)}
+                    style={{
+                      background: '#303030',
+                      borderRadius: '10px',
+                      padding: '12px',
+                      marginBottom: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, background 0.2s ease',
+                      minHeight: '80px',
+                      border: 'none',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#3a3a3a';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#303030';
+                    }}
+                  >
+                    {/* Character Avatar */}
+                    <img
+                      src={group.character.image}
+                      alt={group.character.name}
+                      style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        flexShrink: 0
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.src = '/icons/default-avatar.png';
+                      }}
+                    />
+
+                    {/* Character Info */}
+                    <div style={{
+                      flex: 1,
+                      minWidth: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '2px'
+                      }}>
+                        <h3 style={{
+                          fontFamily: "'Poppins', sans-serif",
+                          fontWeight: 600,
+                          fontSize: '16px',
+                          lineHeight: '22px',
+                          color: 'white',
+                          margin: 0,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {group.character.name}
+                        </h3>
+                        <span style={{
+                          fontFamily: "'Poppins', sans-serif",
+                          fontWeight: 300,
+                          fontSize: '12px',
+                          lineHeight: '18px',
+                          color: 'rgba(255,255,255,0.5)',
+                          flexShrink: 0,
+                          marginLeft: '8px'
+                        }}>
+                          {formatTimestamp(group.mostRecentDate)}
+                        </span>
+                      </div>
+
+                      <p style={{
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: 400,
+                        fontSize: '14px',
+                        lineHeight: '20px',
+                        color: 'rgba(255,255,255,0.65)',
+                        margin: 0
+                      }}>
+                        {group.totalCount} {group.totalCount === 1 ? 'conversation' : 'conversations'}
+                      </p>
+                    </div>
+
+                    {/* Arrow */}
+                    <div style={{
+                      flexShrink: 0,
+                      fontSize: '18px',
+                      color: 'rgba(255,255,255,0.4)'
+                    }}>
+                      →
+                    </div>
+                  </button>
+                ))}
+
+                {/* New Chat Button */}
+                <button
+                  onClick={startNewChat}
+                  style={{
+                    background: '#303030',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    marginTop: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    border: '2px dashed rgba(255,255,255,0.3)',
+                    minHeight: '80px',
+                    width: '100%',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#3a3a3a';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#303030';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+                  }}
+                >
+                  <div style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 50%, #4A90E2 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                    flexShrink: 0
+                  }}>
+                    ➕
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 500,
+                      fontSize: '15px',
+                      lineHeight: '22px',
+                      color: 'white'
+                    }}>
+                      Start New Chat
+                    </div>
+                    <div style={{
+                      fontFamily: "'Poppins', sans-serif",
+                      fontSize: '13px',
+                      color: 'rgba(255,255,255,0.6)',
+                      marginTop: '2px'
+                    }}>
+                      Browse characters and begin a conversation
+                    </div>
+                  </div>
+                </button>
+              </div>
+            ) : (
+              /* Empty State for Character Groups */
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: '64px', marginBottom: '16px', opacity: 0.3 }}>💬</div>
+                <h2 style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '20px',
+                  fontWeight: 600,
+                  lineHeight: '28px',
+                  color: 'white',
+                  marginBottom: '8px'
+                }}>
+                  No conversations yet
+                </h2>
+                <p style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '16px',
+                  lineHeight: '24px',
+                  color: 'rgba(255,255,255,0.5)',
+                  margin: '0 0 24px 0'
+                }}>
+                  Start chatting with your favorite characters
+                </p>
+                <button
+                  onClick={startNewChat}
+                  style={{
+                    padding: '14px 32px',
+                    background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    boxShadow: '0 4px 12px rgba(255, 59, 154, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(255, 59, 154, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 59, 154, 0.3)';
+                  }}
+                >
+                  Browse Characters
+                </button>
+              </div>
+            )
+          ) : (
+            /* STAGE 2: Individual Conversations for Selected Character */
+            sortedSelectedConversations.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {sortedSelectedConversations.map((conv) => {
                 // Get character image - try multiple field names for compatibility
                 const characterImage = conv.character?.image ||
                                      conv.character?.avatar_url ||
@@ -548,94 +786,30 @@ function ChatLandingContent() {
                   </button>
                 );
               })}
-
-              {/* New Chat Button */}
-              <button
-                onClick={startNewChat}
-                style={{
-                  background: '#303030',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  marginTop: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  border: '2px dashed rgba(255,255,255,0.3)',
-                  minHeight: '80px',
-                  width: '100%',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#3a3a3a';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#303030';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
-                }}
-              >
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 50%, #4A90E2 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  flexShrink: 0
+              </div>
+            ) : (
+              /* Empty state for selected character */
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: '64px', marginBottom: '16px', opacity: 0.3 }}>💬</div>
+                <h2 style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '20px',
+                  fontWeight: 600,
+                  lineHeight: '28px',
+                  color: 'white',
+                  marginBottom: '8px'
                 }}>
-                  ➕
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 500,
-                    fontSize: '15px',
-                    lineHeight: '22px',
-                    color: 'white'
-                  }}>
-                    Start New Chat
-                  </div>
-                  <div style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontSize: '13px',
-                    color: 'rgba(255,255,255,0.6)',
-                    marginTop: '2px'
-                  }}>
-                    Browse characters and begin a conversation
-                  </div>
-                </div>
-              </button>
-            </div>
-          ) : (
-            /* Empty State */
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <div style={{ fontSize: '64px', marginBottom: '16px', opacity: 0.3 }}>💬</div>
-              <h2 style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontSize: '20px',
-                fontWeight: 600,
-                lineHeight: '28px',
-                color: 'white',
-                marginBottom: '8px'
-              }}>
-                {searchTerm ? 'No conversations found' : 'No conversations yet'}
-              </h2>
-              <p style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontSize: '16px',
-                lineHeight: '24px',
-                color: 'rgba(255,255,255,0.5)',
-                margin: '0 0 24px 0'
-              }}>
-                {searchTerm
-                  ? 'Try a different search term'
-                  : 'Start chatting with your favorite characters'}
-              </p>
-              {!searchTerm && (
+                  No conversations found
+                </h2>
+                <p style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '16px',
+                  lineHeight: '24px',
+                  color: 'rgba(255,255,255,0.5)',
+                  margin: '0 0 24px 0'
+                }}>
+                  Start a new chat with {characterGroups.find(g => g.character.id === selectedCharacterId)?.character.name}
+                </p>
                 <button
                   onClick={startNewChat}
                   style={{
@@ -660,10 +834,10 @@ function ChatLandingContent() {
                     e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 59, 154, 0.3)';
                   }}
                 >
-                  Browse Characters
+                  Start New Chat
                 </button>
-              )}
-            </div>
+              </div>
+            )
           )}
         </div>
       </div>
