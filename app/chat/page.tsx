@@ -316,6 +316,16 @@ function ChatPageContent() {
     });
   };
 
+  // Format time label for messages
+  const formatTimeLabel = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
   if (!conversationId || conversationId === 0) {
     return (
       <div style={{
@@ -685,114 +695,175 @@ function ChatPageContent() {
               );
             }
 
-            // Regular user/AI messages
-            return (
-          <div
-            key={msg.id || idx}
-            style={{
-              marginBottom: '16px',
-              ...(msg.sender_type === 'ai' ? { maxWidth: '273px' } : {
-                display: 'flex',
-                justifyContent: 'flex-end',
-                marginTop: '24px'
-              })
-            }}
-          >
-            <div style={{ maxWidth: msg.sender_type === 'user' ? '273px' : '100%' }}>
-              {/* Message Bubble - FIXED: Proper padding (px-4 py-2 = 16px 8px) and word-break */}
-              <div style={{
-                padding: '8px 16px', // Changed from 12px 20px to match Candy.AI (py-2 px-4)
-                borderRadius: '24px',
-                marginBottom: '8px',
-                ...(msg.sender_type === 'ai' ? {
-                  background: '#fe3895', // Pink for AI
-                  color: '#202124', // Dark text
-                  borderBottomLeftRadius: '4px'
-                } : {
-                  background: '#3B82F6', // Solid blue for user
-                  color: 'white',
-                  borderBottomRightRadius: '4px',
-                  // Dim temporary messages to show they're being sent
-                  opacity: (msg as any).temporary ? 0.7 : 1
-                }),
-                fontFamily: 'Roboto, sans-serif',
-                fontSize: '15px',
-                lineHeight: '1.4',
-                // FIXED: Proper word breaking to prevent overflow
-                wordBreak: 'break-word' as const,
-                overflowWrap: 'break-word' as const,
-                whiteSpace: 'pre-wrap' as const
-              }}>
-                {renderMessageText(msg.content)}
-              </div>
-
-              {/* Message Footer */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginTop: '4px',
-                ...(msg.sender_type === 'user' && { justifyContent: 'flex-end' })
-              }}>
-                {msg.sender_type === 'ai' && (
-                  <div style={{ width: '34px', height: '29px' }}>
-                    <img
-                      src="/icons/voice-play.png"
-                      alt="Voice"
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    />
-                  </div>
-                )}
-                <div style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '13px',
-                  lineHeight: '20px',
-                  color: '#616162',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  <span>
-                    {new Date(msg.created_at).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                  </span>
-                  {/* Sending indicator */}
-                  {(msg as any).temporary && (
-                    <span style={{
-                      fontSize: '11px',
-                      color: '#4A90E2',
-                      fontStyle: 'italic'
-                    }}>
-                      Sending...
-                    </span>
-                  )}
-                  {/* Failed indicator */}
-                  {(msg as any).failed && (
-                    <span
-                      onClick={() => {
-                        // Retry sending
-                        setMessageInput(msg.content);
-                        handleSendMessage();
-                      }}
+            // USER MESSAGE COMPONENT
+            if (msg.sender_type === 'user') {
+              return (
+                <div
+                  key={msg.id || idx}
+                  id={`message_id_${msg.id}`}
+                  style={{
+                    marginTop: '24px',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    textAlign: 'right',
+                    marginBottom: '8px'
+                  }}
+                >
+                  <div style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    flexDirection: 'column',
+                    gap: '9px',
+                    width: 'auto',
+                    maxWidth: '75%',
+                    alignItems: 'flex-end'
+                  }}>
+                    {/* User Message Bubble - Purple/Blue with sharp bottom-right corner */}
+                    <div
                       style={{
-                        fontSize: '11px',
-                        color: '#FF3B9A',
-                        fontStyle: 'italic',
-                        cursor: 'pointer',
-                        textDecoration: 'underline'
+                        backgroundColor: 'rgba(107, 82, 243, 0.75)',
+                        padding: '8px 16px',
+                        borderTopLeftRadius: '24px',
+                        borderTopRightRadius: '24px',
+                        borderBottomLeftRadius: '24px',
+                        borderBottomRightRadius: '4px',
+                        display: 'inline-flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'flex-start',
+                        opacity: (msg as any).temporary ? 0.7 : 1
                       }}
                     >
-                      Failed - tap to retry
-                    </span>
-                  )}
+                      <p style={{
+                        fontFamily: 'Roboto, sans-serif',
+                        color: 'white',
+                        fontSize: '15px',
+                        fontWeight: 'normal',
+                        textAlign: 'left',
+                        wordBreak: 'break-word',
+                        margin: 0
+                      }}>
+                        {msg.content}
+                      </p>
+                    </div>
+
+                    {/* Timestamp and Status */}
+                    <div style={{
+                      position: 'relative',
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <span style={{
+                        color: '#9CA3AF',
+                        fontSize: '13px',
+                        fontWeight: 'normal'
+                      }}>
+                        {formatTimeLabel(msg.created_at)}
+                      </span>
+
+                      {/* Sending indicator */}
+                      {(msg as any).temporary && (
+                        <span style={{
+                          fontSize: '11px',
+                          color: '#4A90E2',
+                          fontStyle: 'italic'
+                        }}>
+                          Sending...
+                        </span>
+                      )}
+
+                      {/* Failed indicator */}
+                      {(msg as any).failed && (
+                        <span
+                          onClick={() => {
+                            setMessageInput(msg.content);
+                            handleSendMessage();
+                          }}
+                          style={{
+                            fontSize: '11px',
+                            color: '#FF3B9A',
+                            fontStyle: 'italic',
+                            cursor: 'pointer',
+                            textDecoration: 'underline'
+                          }}
+                        >
+                          Failed - tap to retry
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-            );
+              );
+            }
+
+            // CHARACTER/ASSISTANT MESSAGE COMPONENT
+            if (msg.sender_type === 'ai' || msg.sender_type === 'character') {
+              return (
+                <div
+                  key={msg.id || idx}
+                  id={`message_id_${msg.id}`}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    marginTop: '16px',
+                    marginBottom: '16px'
+                  }}
+                >
+                  <div style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    flexDirection: 'column',
+                    gap: '9px',
+                    maxWidth: '75%',
+                    alignItems: 'flex-start'
+                  }}>
+                    {/* Character Message Bubble - Pink with sharp bottom-left corner */}
+                    <div
+                      style={{
+                        backgroundColor: 'rgba(238, 54, 174, 0.75)',
+                        padding: '16px',
+                        borderTopLeftRadius: '24px',
+                        borderTopRightRadius: '24px',
+                        borderBottomRightRadius: '24px',
+                        borderBottomLeftRadius: '4px',
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}
+                    >
+                      {/* Message Text with Asterisk Parsing */}
+                      <p style={{
+                        fontFamily: 'Roboto, sans-serif',
+                        color: '#E5E7EB',
+                        fontSize: '15px',
+                        wordBreak: 'break-word',
+                        margin: 0
+                      }}>
+                        {renderMessageText(msg.content)}
+                      </p>
+                    </div>
+
+                    {/* Voice Play Icon (optional) */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <div style={{ width: '34px', height: '29px' }}>
+                        <img
+                          src="/icons/voice-play.png"
+                          alt="Voice"
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            return null;
           })
         ) : (
           !loading && (
