@@ -112,15 +112,25 @@ function ChatPageContent() {
     messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
   };
 
+  // DEBUG: Track messages state changes
   useEffect(() => {
-    console.log('🎨 RENDER: Messages state changed');
-    console.log('   New messages count:', messages.length);
+    console.log('=== MESSAGES STATE CHANGED ===');
+    console.log('Messages array:', messages);
+    console.log('Messages length:', messages.length);
+    console.log('Messages type:', typeof messages);
+    console.log('Is array:', Array.isArray(messages));
+    if (messages.length > 0) {
+      console.log('First message:', messages[0]);
+      console.log('First message sender_type:', messages[0].sender_type);
+      console.log('First message content:', messages[0].content);
+    }
     console.log('   Order in state:', messages.map((m, i) => ({
       renderIndex: i,
       id: m.id,
       sender: m.sender_type,
       content: m.content.substring(0, 20)
     })));
+    console.log('================================');
     scrollToBottom();
   }, [messages]);
 
@@ -653,6 +663,39 @@ function ChatPageContent() {
           </div>
         )}
 
+        {/* DEBUG INFO PANEL - REMOVE AFTER FIXING */}
+        <div style={{
+          background: 'rgba(255, 0, 0, 0.2)',
+          border: '2px solid red',
+          padding: '16px',
+          marginBottom: '16px',
+          borderRadius: '8px',
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          color: 'white'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#ff6b6b' }}>🔴 DEBUG INFO:</div>
+          <div>Loading: {loading ? 'YES' : 'NO'}</div>
+          <div>Messages length: {messages.length}</div>
+          <div>Messages type: {typeof messages}</div>
+          <div>Is array: {Array.isArray(messages) ? 'YES' : 'NO'}</div>
+          {messages.length > 0 && (
+            <>
+              <div style={{ marginTop: '8px', fontWeight: 'bold' }}>First message:</div>
+              <pre style={{
+                background: 'rgba(0,0,0,0.5)',
+                padding: '8px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                overflow: 'auto',
+                maxHeight: '200px'
+              }}>
+                {JSON.stringify(messages[0], null, 2)}
+              </pre>
+            </>
+          )}
+        </div>
+
         {/* Messages */}
         {!loading && messages && messages.length > 0 ? (
           (() => {
@@ -669,6 +712,22 @@ function ChatPageContent() {
               return m.content && m.content.trim().length > 0;
             });
           })().map((msg, idx) => {
+            console.log(`🎯 Rendering message ${idx}:`, msg);
+            console.log(`   - ID: ${msg.id}`);
+            console.log(`   - Sender: ${msg.sender_type}`);
+            console.log(`   - Content: ${msg.content?.substring(0, 50)}...`);
+
+            // Check message structure
+            if (!msg) {
+              console.error('❌ Message is null/undefined at index', idx);
+              return null;
+            }
+
+            if (!msg.content) {
+              console.warn('⚠️ Message has no content:', msg);
+              return null;
+            }
+
             // System message - centered with special styling
             if ((msg as any).sender_type === 'system') {
               return (
@@ -877,6 +936,49 @@ function ChatPageContent() {
               No messages yet. Start the conversation!
             </div>
           )
+        )}
+
+        {/* SIMPLE DEBUG RENDERING - Shows all messages in basic format */}
+        {!loading && messages.length > 0 && (
+          <div style={{
+            background: 'rgba(0, 255, 0, 0.1)',
+            border: '2px solid green',
+            padding: '16px',
+            marginTop: '16px',
+            borderRadius: '8px',
+            fontFamily: 'monospace',
+            fontSize: '11px'
+          }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '12px', color: '#4ade80' }}>
+              🟢 SIMPLE DEBUG RENDERING ({messages.length} messages):
+            </div>
+            {messages.map((msg, i) => (
+              <div
+                key={msg.id || i}
+                style={{
+                  background: msg.sender_type === 'user'
+                    ? 'rgba(107, 82, 243, 0.3)'
+                    : msg.sender_type === 'system'
+                    ? 'rgba(128, 128, 128, 0.3)'
+                    : 'rgba(238, 54, 174, 0.3)',
+                  padding: '8px',
+                  marginBottom: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(255,255,255,0.2)'
+                }}
+              >
+                <div style={{ color: '#fbbf24', fontSize: '10px' }}>
+                  #{i} | ID: {msg.id} | Type: {msg.sender_type}
+                </div>
+                <div style={{ color: 'white', marginTop: '4px' }}>
+                  {msg.content}
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '9px', marginTop: '4px' }}>
+                  {new Date(msg.created_at).toLocaleTimeString()}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {/* FIXED: Typing indicator - shows "Name..." */}
