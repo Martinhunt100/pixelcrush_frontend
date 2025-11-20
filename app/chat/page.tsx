@@ -981,7 +981,7 @@ function ChatPageContent() {
             <img
               src="/icons/video-attach.png"
               alt="Video"
-              style={{ width: '90%', height: '90%', objectFit: 'contain'9 }}
+              style={{ width: '90%', height: '90%', objectFit: 'contain' }}
             />
           </button>
           <input
