@@ -24,18 +24,37 @@ function ChatLandingContent() {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
       const token = localStorage.getItem('token');
 
+      console.log('=== LOADING USER TOKENS ===');
+      console.log('API URL:', API_URL);
+      console.log('Token exists:', !!token);
+
       const response = await fetch(`${API_URL}/api/users/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
+      console.log('Profile response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
-        setTokens(data.user?.tokens_remaining || 0);
+        console.log('📨 Profile data:', data);
+        console.log('🔍 Data structure:', {
+          hasUser: 'user' in data,
+          userKeys: data.user ? Object.keys(data.user) : [],
+          tokensRemaining: data.user?.tokens_remaining,
+          tokensRemainingType: typeof data.user?.tokens_remaining
+        });
+
+        const tokensValue = data.user?.tokens_remaining || 0;
+        console.log('💰 Setting tokens to:', tokensValue);
+
+        setTokens(tokensValue);
+      } else {
+        console.error('Profile request failed:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Failed to fetch tokens:', error);
+      console.error('❌ Failed to fetch tokens:', error);
       // Don't show error to user - tokens are optional
     }
   };
@@ -50,16 +69,35 @@ function ChatLandingContent() {
 
       const data = await chatAPI.getConversations();
 
-      console.log('📨 API Response:', data);
-      console.log('📊 Conversation count:', Array.isArray(data) ? data.length : 0);
+      console.log('📨 Full API Response:', data);
+      console.log('📦 Response structure:', {
+        hasSuccess: 'success' in data,
+        hasConversations: 'conversations' in data,
+        isArray: Array.isArray(data),
+        isConversationsArray: Array.isArray(data?.conversations)
+      });
+
+      // FIXED: Backend returns { success: true, conversations: [...] }
+      // Not just an array directly!
+      let conversationsArray: Conversation[] = [];
+
+      if (data.success && Array.isArray(data.conversations)) {
+        conversationsArray = data.conversations;
+      } else if (Array.isArray(data)) {
+        // Fallback: if backend returns array directly
+        conversationsArray = data;
+      }
+
+      console.log('📊 Extracted conversations:', conversationsArray.length);
+      console.log('📋 First conversation:', conversationsArray[0]);
 
       // Sort by most recent first (updated_at)
-      const sorted = (Array.isArray(data) ? data : []).sort((a, b) =>
+      const sorted = conversationsArray.sort((a, b) =>
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
 
       setConversations(sorted);
-      console.log('✅ Conversations loaded successfully');
+      console.log('✅ Conversations loaded successfully:', sorted.length);
     } catch (err) {
       console.error('❌ Failed to load conversations:', err);
 

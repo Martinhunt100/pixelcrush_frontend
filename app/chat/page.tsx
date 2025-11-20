@@ -196,22 +196,53 @@ function ChatPageContent() {
 
       // STEP 3: Replace temporary with confirmed messages from backend
       if (response.userMessage && response.aiMessage) {
-        setMessages(prev => {
+        // CRITICAL: Check if AI response is empty
+        const aiContent = response.aiMessage.content?.trim();
+
+        if (!aiContent || aiContent.length === 0) {
+          console.error('⚠️ EMPTY AI RESPONSE DETECTED');
+          console.log('AI message object:', response.aiMessage);
+
           // Remove temporary message
-          const withoutTemp = prev.filter(m => m.id !== tempId);
+          setMessages(prev => prev.filter(m => m.id !== tempId));
 
-          // Add both confirmed messages (user + AI)
-          return [...withoutTemp, response.userMessage, response.aiMessage];
-        });
+          // Add user message back (confirmed) and error message
+          setMessages(prev => [
+            ...prev,
+            response.userMessage,
+            {
+              id: `error-${Date.now()}` as any,
+              conversation_id: conversationId,
+              sender_type: 'system' as any,
+              content: '⚠️ The AI had trouble responding. Please try sending your message again.',
+              created_at: new Date().toISOString()
+            }
+          ]);
 
-        console.log('✅ DONE: Replaced temp with confirmed messages');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.log('🔄 User can retry - input restored');
+        } else {
+          // Normal flow: AI response has content
+          setMessages(prev => {
+            // Remove temporary message
+            const withoutTemp = prev.filter(m => m.id !== tempId);
 
-        // Scroll to bottom
-        setTimeout(() => scrollToBottom('smooth'), 100);
+            // Add both confirmed messages (user + AI)
+            return [...withoutTemp, response.userMessage, response.aiMessage];
+          });
+
+          console.log('✅ DONE: Replaced temp with confirmed messages');
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+          // Scroll to bottom
+          setTimeout(() => scrollToBottom('smooth'), 100);
+        }
       } else {
         // Fallback: reload all messages
-        console.log('⚠️ Unexpected response, reloading messages');
+        console.log('⚠️ Unexpected response format, reloading messages');
+        console.log('Response structure:', {
+          hasUserMessage: !!response.userMessage,
+          hasAiMessage: !!response.aiMessage
+        });
         await loadMessages();
       }
     } catch (error) {
@@ -618,7 +649,15 @@ function ChatPageContent() {
             console.log('📺 RENDERING MESSAGES TO DOM');
             console.log('   Messages array length:', messages.length);
             console.log('   EXACT RENDER ORDER:', messages.map((m, i) => `${i}: ${m.sender_type} - ${m.content.substring(0, 20)}`));
-            return messages;
+            // FILTER OUT EMPTY AI MESSAGES before rendering
+            return messages.filter(m => {
+              // Keep user and system messages always
+              if (m.sender_type === 'user' || m.sender_type === 'system') {
+                return true;
+              }
+              // For AI messages, filter out empty content
+              return m.content && m.content.trim().length > 0;
+            });
           })().map((msg, idx) => {
             // System message - centered with special styling
             if ((msg as any).sender_type === 'system') {
