@@ -964,7 +964,7 @@ function ChatPageContent() {
             <img
               src="/icons/photo-attach.png"
               alt="Photo"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              style={{ width: '80%', height: '80%', objectFit: 'contain' }}
             />
           </button>
           <button
@@ -975,14 +975,13 @@ function ChatPageContent() {
               background: 'none',
               border: 'none',
               padding: 0,
-              cursor: 'pointer',
-              transform: 'scaleY(-1)'
+              cursor: 'pointer'
             }}
           >
             <img
               src="/icons/video-attach.png"
               alt="Video"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              style={{ width: '80%', height: '80%', objectFit: 'contain', transform: 'rotate(180deg) scaleX(-1)' }}
             />
           </button>
           <input
@@ -1022,10 +1021,9 @@ function ChatPageContent() {
               src="/icons/send-button.png"
               alt="Send"
               style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                transform: 'rotate(180deg) scaleY(-1)'
+                width: '50%',
+                height: '50%',
+                objectFit: 'contain'
               }}
             />
           </button>
@@ -1148,6 +1146,9 @@ function ChatPageContent() {
       />
 
       <style jsx>{`
+        .layer-utilities {
+          padding: 2.3px !important;
+        }
         input::placeholder {
           color: white;
           opacity: 0.7;
