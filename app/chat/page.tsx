@@ -953,7 +953,7 @@ function ChatPageContent() {
           <button
             onClick={() => alert('📷 Image attachment - Coming soon!')}
             style={{
-              width: '40px',
+              width: '30px',
               height: '31px',
               background: 'none',
               border: 'none',
@@ -964,13 +964,13 @@ function ChatPageContent() {
             <img
               src="/icons/photo-attach.png"
               alt="Photo"
-              style={{ width: '80%', height: '80%', objectFit: 'contain' }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </button>
           <button
             onClick={() => alert('🎥 Video attachment - Coming soon!')}
             style={{
-              width: '40px',
+              width: '30px',
               height: '31px',
               background: 'none',
               border: 'none',
@@ -981,7 +981,7 @@ function ChatPageContent() {
             <img
               src="/icons/video-attach.png"
               alt="Video"
-              style={{ width: '80%', height: '80%', objectFit: 'contain', transform: 'rotate(180deg) scaleX(-1)' }}
+              style={{ width: '90%', height: '90%', objectFit: 'contain'9 }}
             />
           </button>
           <input
