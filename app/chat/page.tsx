@@ -574,7 +574,8 @@ function ChatPageContent() {
                         fontWeight: 'normal',
                         textAlign: 'left',
                         wordBreak: 'break-word',
-                        margin: 0
+                        margin: 0,
+                        padding: '2.3px'
                       }}>
                         {msg.content}
                       </p>
@@ -672,7 +673,8 @@ function ChatPageContent() {
                         color: '#E5E7EB',
                         fontSize: '15px',
                         wordBreak: 'break-word',
-                        margin: 0
+                        margin: 0,
+                        padding: '2.3px'
                       }}>
                         {renderMessageText(msg.content)}
                       </p>
