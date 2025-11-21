@@ -114,7 +114,7 @@ function ChatLandingContent() {
         character: {
           id: conv.character_id,
           name: conv.character.name,
-          image: conv.character.image || conv.character.avatar_url || '/icons/default-avatar.png'
+          image: conv.character.image || conv.character.avatar_url || '/icons/default-avatar.webp'
         },
         conversations: [conv],
         totalCount: 1,
@@ -470,7 +470,7 @@ function ChatLandingContent() {
                         flexShrink: 0
                       }}
                       onError={(e) => {
-                        e.currentTarget.src = '/icons/default-avatar.png';
+                        e.currentTarget.src = '/icons/default-avatar.webp';
                       }}
                     />
 
@@ -657,7 +657,7 @@ function ChatLandingContent() {
                 // Get character image - try multiple field names for compatibility
                 const characterImage = conv.character?.image ||
                                      conv.character?.avatar_url ||
-                                     '/icons/default-avatar.png';
+                                     '/icons/default-avatar.webp';
                 const characterName = conv.character?.name || 'Unknown Character';
                 const lastMessagePreview = conv.last_message
                   ? (conv.last_message.length > 60
@@ -704,7 +704,7 @@ function ChatLandingContent() {
                       }}
                       onError={(e) => {
                         // Fallback to default avatar if image fails to load
-                        e.currentTarget.src = '/icons/default-avatar.png';
+                        e.currentTarget.src = '/icons/default-avatar.webp';
                       }}
                     />
 
