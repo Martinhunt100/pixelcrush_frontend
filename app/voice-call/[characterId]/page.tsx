@@ -1,23 +1,24 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { characterAPI, userAPI } from '@/lib/api';
 import type { Character } from '@/lib/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UpgradeModal from '@/components/UpgradeModal';
+import Image from 'next/image';
 
 function VoiceCallContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const characterId = searchParams.get('characterId');
+  const params = useParams();
+  const characterId = params.characterId as string;
 
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
-  const [callDuration, setCallDuration] = useState(0);
-  const [tokenCost, setTokenCost] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [tokensUsed, setTokensUsed] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
@@ -28,7 +29,7 @@ function VoiceCallContent() {
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
-  const callTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioQueueRef = useRef<AudioBuffer[]>([]);
   const isPlayingRef = useRef(false);
@@ -48,6 +49,9 @@ function VoiceCallContent() {
         if (!premium) {
           setError('Voice calling is a premium feature');
           setShowUpgradeModal(true);
+          setTimeout(() => {
+            router.push('/subscribe');
+          }, 3000);
           return;
         }
 
@@ -68,7 +72,7 @@ function VoiceCallContent() {
     };
 
     loadData();
-  }, [characterId]);
+  }, [characterId, router]);
 
   // Request microphone permission and start call
   useEffect(() => {
@@ -85,16 +89,13 @@ function VoiceCallContent() {
         connectWebSocket();
 
         // Start call timer
-        startCallTimer();
-
-        // Update status
-        setCallStatus('connected');
+        startTimer();
       } catch (err) {
         console.error('Failed to access microphone:', err);
-        setError('Microphone access denied. Please enable microphone permissions.');
+        alert('Microphone access denied. Please enable microphone permissions.');
         setTimeout(() => {
           router.push(`/chat?characterId=${characterId}`);
-        }, 3000);
+        }, 2000);
       }
     };
 
@@ -102,22 +103,24 @@ function VoiceCallContent() {
 
     // Cleanup on unmount
     return () => {
-      endCall();
+      endCallCleanup();
     };
-  }, [character, isPremium]);
+  }, [character, isPremium, characterId, router]);
 
   const connectWebSocket = () => {
     if (!characterId) return;
 
     const token = localStorage.getItem('token');
-    const wsUrl = `wss://pixelcrushbackend-production.up.railway.app/voice-call?token=${token}&character_id=${characterId}`;
+    const wsUrl = `wss://pixelcrushbackend-production.up.railway.app/voice-call?token=${token}&characterId=${characterId}`;
 
+    console.log('Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
       console.log('WebSocket connected');
-      startAudioCapture();
+      setCallStatus('connected');
+      startMicrophone();
     };
 
     ws.onmessage = async (event) => {
@@ -127,14 +130,15 @@ function VoiceCallContent() {
         if (data.type === 'audio') {
           // Received audio from AI
           setIsAISpeaking(true);
-          await playAudioData(data.audio);
-          setTimeout(() => setIsAISpeaking(false), 100);
+          await playAudio(data.data || data.audio);
+          setTimeout(() => setIsAISpeaking(false), 200);
         } else if (data.type === 'transcript') {
           console.log('AI transcript:', data.text);
         } else if (data.type === 'error') {
           console.error('WebSocket error:', data.message);
           if (data.message.includes('token') || data.message.includes('insufficient')) {
-            setShowUpgradeModal(true);
+            alert('Insufficient tokens. Call will end.');
+            endCall();
           }
         }
       } catch (err) {
@@ -145,15 +149,16 @@ function VoiceCallContent() {
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       setError('Connection error. Please try again.');
+      alert('WebSocket connection error');
     };
 
     ws.onclose = () => {
       console.log('WebSocket closed');
-      stopAudioCapture();
+      stopMicrophone();
     };
   };
 
-  const startAudioCapture = () => {
+  const startMicrophone = async () => {
     if (!audioStreamRef.current || !wsRef.current) return;
 
     try {
@@ -171,10 +176,10 @@ function VoiceCallContent() {
             const base64Audio = (reader.result as string).split(',')[1];
             wsRef.current?.send(JSON.stringify({
               type: 'audio',
-              audio: base64Audio
+              data: base64Audio
             }));
             setIsUserSpeaking(true);
-            setTimeout(() => setIsUserSpeaking(false), 100);
+            setTimeout(() => setIsUserSpeaking(false), 150);
           };
           reader.readAsDataURL(event.data);
         }
@@ -182,18 +187,20 @@ function VoiceCallContent() {
 
       // Capture audio in chunks every 100ms
       mediaRecorder.start(100);
+      console.log('Microphone started');
     } catch (err) {
-      console.error('Failed to start audio capture:', err);
+      console.error('Failed to start microphone:', err);
     }
   };
 
-  const stopAudioCapture = () => {
+  const stopMicrophone = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
+      console.log('Microphone stopped');
     }
   };
 
-  const playAudioData = async (base64Audio: string) => {
+  const playAudio = async (base64Audio: string) => {
     try {
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext();
@@ -238,22 +245,22 @@ function VoiceCallContent() {
     source.start();
   };
 
-  const startCallTimer = () => {
-    callTimerRef.current = setInterval(() => {
-      setCallDuration(prev => {
+  const startTimer = () => {
+    timerIntervalRef.current = setInterval(() => {
+      setDuration(prev => {
         const newDuration = prev + 1;
-        // Calculate cost: 5 tokens per minute = 5/60 tokens per second
-        setTokenCost(Math.ceil(newDuration * (5 / 60)));
+        // Calculate tokens: 5 tokens per 60 seconds
+        setTokensUsed(Math.ceil(newDuration / 60) * 5);
         return newDuration;
       });
     }, 1000);
   };
 
-  const endCall = () => {
+  const endCallCleanup = () => {
     // Stop timer
-    if (callTimerRef.current) {
-      clearInterval(callTimerRef.current);
-      callTimerRef.current = null;
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
 
     // Close WebSocket
@@ -262,8 +269,8 @@ function VoiceCallContent() {
       wsRef.current = null;
     }
 
-    // Stop audio capture
-    stopAudioCapture();
+    // Stop microphone
+    stopMicrophone();
 
     // Stop audio stream
     if (audioStreamRef.current) {
@@ -276,8 +283,29 @@ function VoiceCallContent() {
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
+  };
 
+  const endCall = async () => {
     setCallStatus('ended');
+    endCallCleanup();
+
+    // Call backend to finalize token deduction
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app'}/api/voice/end-call`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          characterId,
+          durationSeconds: duration
+        })
+      });
+    } catch (err) {
+      console.error('Failed to finalize call:', err);
+    }
 
     // Navigate back to chat after a delay
     setTimeout(() => {
@@ -297,77 +325,23 @@ function VoiceCallContent() {
 
   if (loading) {
     return (
-      <div style={{
-        fontFamily: 'Poppins, sans-serif',
-        background: '#131313',
-        color: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        maxWidth: '393px',
-        margin: '0 auto'
-      }}>
-        <div style={{
-          width: '48px',
-          height: '48px',
-          border: '4px solid rgba(16, 185, 129, 0.2)',
-          borderTop: '4px solid #10B981',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }} />
-        <p style={{ marginTop: '20px', fontSize: '16px' }}>Loading...</p>
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
+        <div className="w-12 h-12 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
+        <p className="mt-4 text-lg">Loading...</p>
       </div>
     );
   }
 
   if (error || !character) {
     return (
-      <div style={{
-        fontFamily: 'Poppins, sans-serif',
-        background: '#131313',
-        color: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        maxWidth: '393px',
-        margin: '0 auto',
-        padding: '24px'
-      }}>
-        <div style={{
-          fontSize: '48px',
-          marginBottom: '16px'
-        }}>⚠️</div>
-        <p style={{
-          fontSize: '18px',
-          fontWeight: 600,
-          marginBottom: '8px',
-          textAlign: 'center'
-        }}>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white px-6">
+        <div className="text-5xl mb-4">⚠️</div>
+        <p className="text-xl font-semibold mb-2 text-center">
           {error || 'Character not found'}
         </p>
         <button
           onClick={() => router.push('/chat-landing')}
-          style={{
-            padding: '12px 24px',
-            background: 'linear-gradient(135deg, #FF3B9A 0%, #A445ED 100%)',
-            border: 'none',
-            borderRadius: '8px',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            marginTop: '16px'
-          }}
+          className="mt-4 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg font-semibold hover:shadow-lg transition-all"
         >
           Back to Chats
         </button>
@@ -377,30 +351,14 @@ function VoiceCallContent() {
   }
 
   return (
-    <div style={{
-      fontFamily: 'Poppins, sans-serif',
-      background: 'linear-gradient(180deg, #131313 0%, #1a1a1a 100%)',
-      color: 'white',
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      maxWidth: '393px',
-      margin: '0 auto',
-      width: '100%',
-      position: 'relative'
-    }}>
+    <div className="flex flex-col min-h-screen bg-black text-white max-w-md mx-auto relative">
       {/* Status Bar */}
-      <div style={{
-        padding: '20px 24px',
-        textAlign: 'center'
-      }}>
-        <p style={{
-          fontSize: '14px',
-          color: callStatus === 'connected' ? '#10B981' : '#FF3B9A',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '1px'
-        }}>
+      <div className="py-5 px-6 text-center">
+        <p className={`text-sm font-semibold uppercase tracking-wider ${
+          callStatus === 'connected' ? 'text-green-500' :
+          callStatus === 'connecting' ? 'text-yellow-500' :
+          'text-red-500'
+        }`}>
           {callStatus === 'connecting' && 'Connecting...'}
           {callStatus === 'connected' && 'Connected'}
           {callStatus === 'ended' && 'Call Ended'}
@@ -408,122 +366,71 @@ function VoiceCallContent() {
       </div>
 
       {/* Character Display */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 24px'
-      }}>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
         {/* Character Image with Pulse Animation */}
-        <div style={{
-          width: '200px',
-          height: '200px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          border: isAISpeaking ? '4px solid #10B981' : '4px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: isAISpeaking ? '0 0 30px rgba(16, 185, 129, 0.6)' : '0 0 20px rgba(0, 0, 0, 0.5)',
-          marginBottom: '24px',
-          transition: 'all 0.3s ease',
-          animation: isAISpeaking ? 'pulse 1s infinite' : 'none'
-        }}>
+        <div
+          className={`w-[200px] h-[200px] rounded-full overflow-hidden mb-6 transition-all duration-300 ${
+            isAISpeaking
+              ? 'ring-4 ring-green-500 shadow-[0_0_30px_rgba(16,185,129,0.6)] animate-pulse'
+              : 'ring-4 ring-white/20 shadow-[0_0_20px_rgba(0,0,0,0.5)]'
+          }`}
+        >
           <img
-            src={character.avatar_url}
+            src={character.avatar_url || '/images/default-avatar.png'}
             alt={character.name}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover'
-            }}
+            className="w-full h-full object-cover"
           />
         </div>
 
         {/* Character Name */}
-        <h2 style={{
-          fontSize: '28px',
-          fontWeight: 700,
-          marginBottom: '8px'
-        }}>
+        <h2 className="text-2xl font-semibold mb-2">
           {character.name}
         </h2>
 
         {/* Character Info */}
-        <p style={{
-          fontSize: '14px',
-          color: 'rgba(255, 255, 255, 0.6)',
-          marginBottom: '32px'
-        }}>
-          {character.age && character.occupation ? `${character.age} • ${character.occupation}` : character.tagline}
+        <p className="text-sm text-white/60 mb-8">
+          {character.age && character.occupation
+            ? `${character.age} • ${character.occupation}`
+            : character.tagline || 'AI Character'}
         </p>
 
         {/* Call Duration */}
-        <div style={{
-          fontSize: '48px',
-          fontWeight: 300,
-          fontFamily: 'monospace',
-          marginBottom: '16px',
-          color: isUserSpeaking ? '#10B981' : 'white'
-        }}>
-          {formatDuration(callDuration)}
+        <div className={`text-5xl font-light font-mono mb-4 transition-colors ${
+          isUserSpeaking ? 'text-green-500' : 'text-white'
+        }`}>
+          {formatDuration(duration)}
         </div>
 
         {/* Token Cost */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 16px',
-          background: 'rgba(0, 0, 0, 0.3)',
-          borderRadius: '20px',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full border border-white/10">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="10" stroke="#FFD700" strokeWidth="2"/>
             <text x="12" y="16" textAnchor="middle" fill="#FFD700" fontSize="12" fontWeight="bold">T</text>
           </svg>
-          <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.8)' }}>
-            Cost: {tokenCost} tokens (5 tokens/min)
+          <span className="text-sm text-white/80">
+            Cost: {tokensUsed} tokens (5 tokens/min)
           </span>
         </div>
 
         {/* Permission Status */}
-        {!hasPermission && (
-          <p style={{
-            marginTop: '16px',
-            fontSize: '12px',
-            color: '#FF3B9A'
-          }}>
+        {!hasPermission && callStatus === 'connecting' && (
+          <p className="mt-4 text-xs text-red-400">
             Waiting for microphone permission...
           </p>
         )}
       </div>
 
       {/* Controls */}
-      <div style={{
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        alignItems: 'center'
-      }}>
+      <div className="px-6 pb-8 flex flex-col items-center gap-4">
         {/* Mute Button */}
         <button
           onClick={toggleMute}
           disabled={callStatus !== 'connected'}
-          style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            background: isMuted ? '#FF3B9A' : 'rgba(255, 255, 255, 0.1)',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: callStatus === 'connected' ? 'pointer' : 'not-allowed',
-            opacity: callStatus === 'connected' ? 1 : 0.5,
-            transition: 'all 0.2s ease'
-          }}
+          className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+            isMuted
+              ? 'bg-red-500 hover:bg-red-600'
+              : 'bg-white/10 hover:bg-white/20'
+          } ${callStatus !== 'connected' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         >
           {isMuted ? (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -544,33 +451,17 @@ function VoiceCallContent() {
         <button
           onClick={endCall}
           disabled={callStatus === 'ended'}
-          style={{
-            width: '80%',
-            padding: '16px',
-            background: 'linear-gradient(135deg, #FF3B9A 0%, #ED4545 100%)',
-            border: 'none',
-            borderRadius: '12px',
-            color: 'white',
-            fontSize: '16px',
-            fontWeight: 600,
-            cursor: callStatus !== 'ended' ? 'pointer' : 'not-allowed',
-            opacity: callStatus !== 'ended' ? 1 : 0.5,
-            transition: 'all 0.2s ease',
-            boxShadow: '0 4px 12px rgba(255, 59, 154, 0.3)'
-          }}
+          className={`w-[80%] py-4 bg-gradient-to-r from-red-500 to-red-600 rounded-xl font-semibold text-base transition-all shadow-lg shadow-red-500/30 ${
+            callStatus !== 'ended'
+              ? 'cursor-pointer hover:shadow-xl hover:shadow-red-500/40 hover:scale-105'
+              : 'opacity-50 cursor-not-allowed'
+          }`}
         >
           {callStatus === 'ended' ? 'Returning to Chat...' : 'End Call'}
         </button>
       </div>
 
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
-
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-      `}</style>
     </div>
   );
 }

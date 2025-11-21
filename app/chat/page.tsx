@@ -330,8 +330,8 @@ function ChatPageContent() {
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {isPremium && characterId && (
-            <button
-              onClick={() => router.push(`/voice-call?characterId=${characterId}`)}
+            <a
+              href={`/voice-call/${characterId}`}
               style={{
                 width: '40px',
                 height: '40px',
@@ -343,7 +343,8 @@ function ChatPageContent() {
                 justifyContent: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                textDecoration: 'none'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.05)';
@@ -359,7 +360,7 @@ function ChatPageContent() {
                 alt="Voice Call"
                 style={{ width: '20px', height: '20px', objectFit: 'contain' }}
               />
-            </button>
+            </a>
           )}
           <TokenDisplay />
         </div>
@@ -1024,7 +1025,7 @@ function ChatPageContent() {
           }}>Chat</div>
         </a>
 
-        <a href={characterId ? `/voice-call?characterId=${characterId}` : "/voice"} style={{
+        <a href={characterId ? `/voice-call/${characterId}` : "/voice"} style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
