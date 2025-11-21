@@ -39,6 +39,7 @@ export interface User {
   email: string;
   username?: string;
   tokens?: number;
+  subscription_active?: boolean;
   created_at?: string;
 }
 

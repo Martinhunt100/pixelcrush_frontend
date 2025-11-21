@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { chatAPI, characterAPI } from '@/lib/api';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { chatAPI, characterAPI, userAPI } from '@/lib/api';
 import type { Message, Character } from '@/lib/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UpgradeModal from '@/components/UpgradeModal';
 import TokenDisplay from '@/components/TokenDisplay';
 
 function ChatPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const conversationId = parseInt(searchParams.get('conversationId') || '0');
   const characterId = searchParams.get('characterId');
@@ -22,6 +23,7 @@ function ChatPageContent() {
   const [showTimeout, setShowTimeout] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   // TODO: Set remainingMessages from backend response when available
   // Backend should return { remaining_messages: number } in chat API responses
   // Example: setRemainingMessages(response.remaining_messages)
@@ -29,6 +31,19 @@ function ChatPageContent() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load user profile to check premium status
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const user = await userAPI.getProfile();
+        setIsPremium(user.subscription_active || false);
+      } catch (error) {
+        console.error('Failed to load user profile:', error);
+      }
+    };
+    loadUserProfile();
+  }, []);
 
   // Load character details
   useEffect(() => {
@@ -313,7 +328,41 @@ function ChatPageContent() {
             style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
           />
         </a>
-        <TokenDisplay />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {isPremium && characterId && (
+            <button
+              onClick={() => router.push(`/voice-call?characterId=${characterId}`)}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: '#10B981',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
+              }}
+            >
+              <img
+                src="/icons/call-icon.png"
+                alt="Voice Call"
+                style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+              />
+            </button>
+          )}
+          <TokenDisplay />
+        </div>
       </div>
 
       {/* Character Info Bar - Fixed below header */}
@@ -975,7 +1024,7 @@ function ChatPageContent() {
           }}>Chat</div>
         </a>
 
-        <a href="/voice" style={{
+        <a href={characterId ? `/voice-call?characterId=${characterId}` : "/voice"} style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
