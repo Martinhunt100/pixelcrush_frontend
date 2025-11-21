@@ -19,48 +19,16 @@
   }
 }
 
-/* Global reset - OUTSIDE of @layer so inline styles can override */
-* {
+/* Global reset - but EXCLUDE chat page messages */
+*:not(.chat-page-override *) {
   margin: 0 !important;
   padding: 0 !important;
   box-sizing: border-box !important;
 }
 
-/* ============================================
-   CHAT PAGE PADDING OVERRIDE
-   ============================================ */
-
-/* Most direct - target the p-message class directly */
-.chat-page-override .p-message {
-  box-sizing: border-box !important;
+/* Chat page message padding */
+.chat-page-override p {
   margin: 0 !important;
   padding: 2.3px !important;
-}
-
-/* Override for message text on chat page only */
-.chat-page-override [id^="message_id_"] p {
   box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 2.3px !important;
-}
-
-/* Backup rule with higher specificity */
-html body .chat-page-override div[id^="message_id_"] div p {
-  box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 2.3px !important;
-}
-
-/* Backup for user messages */
-.chat-page-override .user-message p {
-  box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 2.3px !important;
-}
-
-/* Backup for assistant messages - if you have this class */
-.chat-page-override .assistant-message p {
-  box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 2.3px !important;
 }
