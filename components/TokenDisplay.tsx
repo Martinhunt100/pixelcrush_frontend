@@ -20,9 +20,9 @@ export default function TokenDisplay() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
 
         console.log('=== FETCHING TOKENS ===');
-        console.log('API URL:', `${apiUrl}/api/users/profile`);
+        console.log('API URL:', `${apiUrl}/api/user`);
 
-        const response = await fetch(`${apiUrl}/api/users/profile`, {
+        const response = await fetch(`${apiUrl}/api/user`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -35,16 +35,23 @@ export default function TokenDisplay() {
         }
 
         const data = await response.json();
-        console.log('📨 Profile data:', data);
+        console.log('📨 Raw API response:', JSON.stringify(data, null, 2));
 
-        // Extract tokens - check multiple possible paths
-        const tokenCount = data.user?.tokens_remaining ||
-                          data.tokens_remaining ||
+        // Extract tokens from response.tokens_remaining
+        const tokenCount = data.tokens_remaining ||
+                          data.user?.tokens_remaining ||
+                          data.tokens ||
                           data.user?.tokens ||
                           0;
 
         console.log('💰 Token count extracted:', tokenCount);
         console.log('🔍 Token type:', typeof tokenCount);
+        console.log('📊 All possible token fields:', {
+          'data.tokens_remaining': data.tokens_remaining,
+          'data.user?.tokens_remaining': data.user?.tokens_remaining,
+          'data.tokens': data.tokens,
+          'data.user?.tokens': data.user?.tokens
+        });
 
         setTokens(tokenCount);
 
@@ -59,15 +66,17 @@ export default function TokenDisplay() {
     fetchTokens();
   }, []);
 
-  // Format large numbers
+  // Format large numbers (no decimals)
   const formatTokens = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
+    const rounded = Math.floor(num);
+
+    if (rounded >= 1000000) {
+      return `${Math.floor(rounded / 1000000)}M`;
     }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
+    if (rounded >= 1000) {
+      return `${Math.floor(rounded / 1000)}K`;
     }
-    return num.toFixed(1);
+    return rounded.toString();
   };
 
   if (loading) {
@@ -129,7 +138,7 @@ export default function TokenDisplay() {
         lineHeight: '24px',
         color: 'rgba(255,255,255,0.8)'
       }}>
-        {tokens !== null ? formatTokens(tokens) : '0.0'}
+        {tokens !== null ? formatTokens(tokens) : '0'}
       </div>
     </a>
   );

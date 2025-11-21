@@ -48,12 +48,20 @@ function VoiceCallContent() {
         }
 
         // Check user tokens
+        console.log('=== VOICE CALL TOKEN CHECK ===');
         const user = await userAPI.getProfile();
+        console.log('📨 Raw user data:', JSON.stringify(user, null, 2));
+        console.log('🔍 user.tokens value:', user.tokens);
+        console.log('🔍 user.tokens type:', typeof user.tokens);
+        console.log('🔍 user.tokens_remaining:', user.tokens_remaining);
+        console.log('🔍 user.subscription_tier:', user.subscription_tier);
+
         const tokens = user.tokens || 0;
         const tier = user.subscription_tier || 'free';
 
-        console.log('User tokens:', tokens);
-        console.log('Subscription tier:', tier);
+        console.log('💰 Final tokens value:', tokens);
+        console.log('🎫 Final tier value:', tier);
+        console.log('❓ Token check result (tokens < 5):', tokens < 5);
 
         setUserTokens(tokens);
         setSubscriptionTier(tier);
