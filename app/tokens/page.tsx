@@ -22,8 +22,8 @@ export default function TokensPage() {
 
         if (response.ok) {
           const data = await response.json();
-          const tokenCount = data.user?.tokens_remaining || data.tokens_remaining || data.user?.tokens || 0;
-          setTokens(tokenCount);
+          // Access tokens_remaining directly (no wrapper)
+          setTokens(data.tokens_remaining || 0);
         }
       } catch (error) {
         console.error('Failed to fetch tokens:', error);
@@ -33,11 +33,12 @@ export default function TokensPage() {
     fetchTokens();
   }, []);
 
-  // Format token number
+  // Format token number (no decimals)
   const formatTokens = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toFixed(1);
+    const rounded = Math.floor(num);
+    if (rounded >= 1000000) return `${Math.floor(rounded / 1000000)}M`;
+    if (rounded >= 1000) return `${Math.floor(rounded / 1000)}K`;
+    return rounded.toLocaleString();
   };
 
   const packages = [

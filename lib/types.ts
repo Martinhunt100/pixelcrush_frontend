@@ -38,10 +38,12 @@ export interface User {
   id: string;
   email: string;
   username?: string;
-  tokens?: number;
-  subscription_active?: boolean;
-  subscription_tier?: string;
-  created_at?: string;
+  tokens_remaining: number;
+  messages_remaining: number;
+  message_count: number;
+  subscription_active: boolean;
+  subscription_tier: 'free' | 'monthly' | 'annual';
+  created_at: string;
 }
 
 export interface AuthResponse {

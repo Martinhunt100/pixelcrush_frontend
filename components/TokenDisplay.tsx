@@ -20,40 +20,29 @@ export default function TokenDisplay() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
 
         console.log('=== FETCHING TOKENS ===');
-        console.log('API URL:', `${apiUrl}/api/user`);
+        console.log('Endpoint:', `${apiUrl}/api/users/profile`);
 
-        const response = await fetch(`${apiUrl}/api/user`, {
+        const response = await fetch(`${apiUrl}/api/users/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        console.log('✅ Token fetch status:', response.status);
+        console.log('Response status:', response.status);
 
         if (!response.ok) {
+          console.error('Failed to fetch user data:', response.status, response.statusText);
           throw new Error(`Failed to fetch: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('📨 Raw API response:', JSON.stringify(data, null, 2));
 
-        // Extract tokens from response.tokens_remaining
-        const tokenCount = data.tokens_remaining ||
-                          data.user?.tokens_remaining ||
-                          data.tokens ||
-                          data.user?.tokens ||
-                          0;
+        console.log('User data received:', data);
+        console.log('tokens_remaining:', data.tokens_remaining);
+        console.log('Type:', typeof data.tokens_remaining);
 
-        console.log('💰 Token count extracted:', tokenCount);
-        console.log('🔍 Token type:', typeof tokenCount);
-        console.log('📊 All possible token fields:', {
-          'data.tokens_remaining': data.tokens_remaining,
-          'data.user?.tokens_remaining': data.user?.tokens_remaining,
-          'data.tokens': data.tokens,
-          'data.user?.tokens': data.user?.tokens
-        });
-
-        setTokens(tokenCount);
+        // Use data directly (no wrapper)
+        setTokens(data.tokens_remaining || 0);
 
       } catch (error) {
         console.error('❌ Failed to fetch tokens:', error);

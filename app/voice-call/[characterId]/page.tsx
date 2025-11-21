@@ -49,26 +49,22 @@ function VoiceCallContent() {
 
         // Check user tokens
         console.log('=== VOICE CALL TOKEN CHECK ===');
-        const user = await userAPI.getProfile();
-        console.log('📨 Raw user data:', JSON.stringify(user, null, 2));
-        console.log('🔍 user.tokens value:', user.tokens);
-        console.log('🔍 user.tokens type:', typeof user.tokens);
-        console.log('🔍 user.tokens_remaining:', user.tokens_remaining);
-        console.log('🔍 user.subscription_tier:', user.subscription_tier);
+        const userData = await userAPI.getProfile();
+        console.log('📨 Raw user data:', JSON.stringify(userData, null, 2));
 
-        const tokens = user.tokens || 0;
-        const tier = user.subscription_tier || 'free';
+        console.log('Voice call token check:', {
+          tokens_remaining: userData.tokens_remaining,
+          required: 5,
+          hasEnough: userData.tokens_remaining >= 5,
+          subscription_tier: userData.subscription_tier
+        });
 
-        console.log('💰 Final tokens value:', tokens);
-        console.log('🎫 Final tier value:', tier);
-        console.log('❓ Token check result (tokens < 5):', tokens < 5);
-
-        setUserTokens(tokens);
-        setSubscriptionTier(tier);
+        setUserTokens(userData.tokens_remaining);
+        setSubscriptionTier(userData.subscription_tier);
 
         // Need at least 5 tokens for 1 minute of call
-        if (tokens < 5) {
-          if (tier === 'free') {
+        if (userData.tokens_remaining < 5) {
+          if (userData.subscription_tier === 'free') {
             setError('You need tokens to make voice calls. Subscribe to get 100 tokens/month!');
             alert('You need tokens to make voice calls. Subscribe to get 100 tokens/month!');
             setTimeout(() => {
@@ -289,10 +285,10 @@ function VoiceCallContent() {
 
   const checkTokenBalance = async (tokensConsumed: number) => {
     try {
-      const user = await userAPI.getProfile();
-      const tokensRemaining = (user.tokens || 0) - tokensConsumed;
+      const userData = await userAPI.getProfile();
+      const tokensRemaining = userData.tokens_remaining - tokensConsumed;
 
-      console.log('Token check:', { tokensRemaining, tokensConsumed, totalTokens: user.tokens });
+      console.log('Token check:', { tokensRemaining, tokensConsumed, totalTokens: userData.tokens_remaining });
 
       // If tokens running out (less than 5 remaining), end call
       if (tokensRemaining < 5) {
