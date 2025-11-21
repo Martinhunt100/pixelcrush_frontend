@@ -29,6 +29,13 @@
    CHAT PAGE PADDING OVERRIDE
    ============================================ */
 
+/* Most direct - target the p-message class directly */
+.chat-page-override .p-message {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 2.3px !important;
+}
+
 /* Override for message text on chat page only */
 .chat-page-override [id^="message_id_"] p {
   box-sizing: border-box !important;
