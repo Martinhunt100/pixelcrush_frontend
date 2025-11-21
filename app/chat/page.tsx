@@ -37,7 +37,20 @@ function ChatPageContent() {
     const loadUserProfile = async () => {
       try {
         const user = await userAPI.getProfile();
-        setIsPremium(user.subscription_active || false);
+
+        // DEBUG: Log user object structure
+        console.log('=== USER OBJECT DEBUG ===');
+        console.log('Full user:', user);
+        console.log('subscription_active:', user.subscription_active);
+        console.log('subscription.active:', user.subscription?.active);
+        console.log('subscription object:', user.subscription);
+        console.log('=========================');
+
+        // Check both possible subscription structures
+        const isUserPremium = user.subscription_active || user.subscription?.active || false;
+        console.log('Final isPremium value:', isUserPremium);
+
+        setIsPremium(isUserPremium);
       } catch (error) {
         console.error('Failed to load user profile:', error);
       }
@@ -329,6 +342,9 @@ function ChatPageContent() {
           />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Debug: Show when conditions would trigger */}
+          {console.log('Call button render check:', { isPremium, characterId, willShow: isPremium && characterId })}
+
           {isPremium && characterId && (
             <a
               href={`/voice-call/${characterId}`}
