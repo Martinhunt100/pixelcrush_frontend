@@ -14,15 +14,16 @@
     padding: 0 !important;
   }
 
-  * {
-    margin: 0 !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-  }
-
   html {
     background: #131313 !important;
   }
+}
+
+/* Global reset - OUTSIDE of @layer so inline styles can override */
+* {
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
 }
 
 /* ============================================
