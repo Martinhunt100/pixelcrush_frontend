@@ -31,20 +31,28 @@
 
 /* Override for message text on chat page only */
 .chat-page-override [id^="message_id_"] p {
+  box-sizing: border-box !important;
+  margin: 0 !important;
   padding: 2.3px !important;
 }
 
 /* Backup rule with higher specificity */
 html body .chat-page-override div[id^="message_id_"] div p {
+  box-sizing: border-box !important;
+  margin: 0 !important;
   padding: 2.3px !important;
 }
 
 /* Backup for user messages */
 .chat-page-override .user-message p {
+  box-sizing: border-box !important;
+  margin: 0 !important;
   padding: 2.3px !important;
 }
 
 /* Backup for assistant messages - if you have this class */
 .chat-page-override .assistant-message p {
+  box-sizing: border-box !important;
+  margin: 0 !important;
   padding: 2.3px !important;
 }
