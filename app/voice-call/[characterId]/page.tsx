@@ -376,7 +376,7 @@ function VoiceCallContent() {
           }`}
         >
           <img
-            src={character.avatar_url || '/images/default-avatar.png'}
+            src={character.avatar_url || '/icons/default-avatar.webp'}
             alt={character.name}
             className="w-full h-full object-cover"
           />
