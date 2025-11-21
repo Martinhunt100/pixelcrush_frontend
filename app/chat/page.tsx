@@ -23,7 +23,6 @@ function ChatPageContent() {
   const [showTimeout, setShowTimeout] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
   // TODO: Set remainingMessages from backend response when available
   // Backend should return { remaining_messages: number } in chat API responses
   // Example: setRemainingMessages(response.remaining_messages)
@@ -31,32 +30,6 @@ function ChatPageContent() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Load user profile to check premium status
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      try {
-        const user = await userAPI.getProfile();
-
-        // DEBUG: Log user object structure
-        console.log('=== USER OBJECT DEBUG ===');
-        console.log('Full user:', user);
-        console.log('subscription_active:', user.subscription_active);
-        console.log('subscription.active:', user.subscription?.active);
-        console.log('subscription object:', user.subscription);
-        console.log('=========================');
-
-        // Check both possible subscription structures
-        const isUserPremium = user.subscription_active || user.subscription?.active || false;
-        console.log('Final isPremium value:', isUserPremium);
-
-        setIsPremium(isUserPremium);
-      } catch (error) {
-        console.error('Failed to load user profile:', error);
-      }
-    };
-    loadUserProfile();
-  }, []);
 
   // Load character details
   useEffect(() => {
@@ -342,10 +315,8 @@ function ChatPageContent() {
           />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Debug: Show when conditions would trigger */}
-          {console.log('Call button render check:', { isPremium, characterId, willShow: isPremium && characterId })}
-
-          {isPremium && characterId && (
+          {/* Green Call Button - visible to all users, token check on click */}
+          {characterId && (
             <a
               href={`/voice-call/${characterId}`}
               style={{

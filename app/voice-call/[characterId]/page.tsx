@@ -24,7 +24,8 @@ function VoiceCallContent() {
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [isUserSpeaking, setIsUserSpeaking] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
+  const [userTokens, setUserTokens] = useState(0);
+  const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
 
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -34,29 +35,44 @@ function VoiceCallContent() {
   const audioQueueRef = useRef<AudioBuffer[]>([]);
   const isPlayingRef = useRef(false);
 
-  // Load user profile and character
+  // Load user profile and character, check tokens
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Check premium status
-        const user = await userAPI.getProfile();
-        const premium = user.subscription_active || false;
-        setIsPremium(premium);
-
-        if (!premium) {
-          setError('Voice calling is a premium feature');
-          setShowUpgradeModal(true);
-          setTimeout(() => {
-            router.push('/subscribe');
-          }, 3000);
+        if (!characterId) {
+          setError('No character selected');
           return;
         }
 
-        if (!characterId) {
-          setError('No character selected');
+        // Check user tokens
+        const user = await userAPI.getProfile();
+        const tokens = user.tokens || 0;
+        const tier = user.subscription_tier || 'free';
+
+        console.log('User tokens:', tokens);
+        console.log('Subscription tier:', tier);
+
+        setUserTokens(tokens);
+        setSubscriptionTier(tier);
+
+        // Need at least 5 tokens for 1 minute of call
+        if (tokens < 5) {
+          if (tier === 'free') {
+            setError('You need tokens to make voice calls. Subscribe to get 100 tokens/month!');
+            alert('You need tokens to make voice calls. Subscribe to get 100 tokens/month!');
+            setTimeout(() => {
+              router.push('/subscribe');
+            }, 2000);
+          } else {
+            setError('Insufficient tokens. Purchase more tokens to continue.');
+            alert('Insufficient tokens. Purchase more tokens to continue.');
+            setTimeout(() => {
+              router.push('/tokens');
+            }, 2000);
+          }
           return;
         }
 
@@ -76,7 +92,7 @@ function VoiceCallContent() {
 
   // Request microphone permission and start call
   useEffect(() => {
-    if (!character || !isPremium) return;
+    if (!character || userTokens < 5) return;
 
     const startCall = async () => {
       try {
@@ -105,7 +121,7 @@ function VoiceCallContent() {
     return () => {
       endCallCleanup();
     };
-  }, [character, isPremium, characterId, router]);
+  }, [character, userTokens, characterId, router]);
 
   const connectWebSocket = () => {
     if (!characterId) return;
@@ -250,10 +266,34 @@ function VoiceCallContent() {
       setDuration(prev => {
         const newDuration = prev + 1;
         // Calculate tokens: 5 tokens per 60 seconds
-        setTokensUsed(Math.ceil(newDuration / 60) * 5);
+        const tokensConsumed = Math.ceil(newDuration / 60) * 5;
+        setTokensUsed(tokensConsumed);
+
+        // Every 60 seconds, check if user still has tokens
+        if (newDuration % 60 === 0) {
+          checkTokenBalance(tokensConsumed);
+        }
+
         return newDuration;
       });
     }, 1000);
+  };
+
+  const checkTokenBalance = async (tokensConsumed: number) => {
+    try {
+      const user = await userAPI.getProfile();
+      const tokensRemaining = (user.tokens || 0) - tokensConsumed;
+
+      console.log('Token check:', { tokensRemaining, tokensConsumed, totalTokens: user.tokens });
+
+      // If tokens running out (less than 5 remaining), end call
+      if (tokensRemaining < 5) {
+        alert('Tokens depleted. Call ending.');
+        endCall();
+      }
+    } catch (error) {
+      console.error('Failed to check token balance:', error);
+    }
   };
 
   const endCallCleanup = () => {

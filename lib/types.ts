@@ -40,6 +40,7 @@ export interface User {
   username?: string;
   tokens?: number;
   subscription_active?: boolean;
+  subscription_tier?: string;
   created_at?: string;
 }
 
