@@ -19,11 +19,9 @@ function VoiceCallContent() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<number | null>(null);
   const greetingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const audioLevelIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Helper function to configure audio session for iOS
   const configureAudioSession = () => {
@@ -40,85 +38,6 @@ function VoiceCallContent() {
         console.log('Silent audio prime failed (expected on some devices)');
       });
       console.log('✅ iOS audio session primed');
-    }
-  };
-
-  // Helper function to apply Web Audio API processing for natural feminine voice
-  const applyAudioProcessing = (stream: MediaStream, audioElement: HTMLAudioElement) => {
-    try {
-      console.log('🎵 Setting up Web Audio API processing...');
-
-      // Create AudioContext optimized for 24kHz (OpenAI Realtime API sample rate)
-      const audioContext = new AudioContext({ sampleRate: 24000 });
-      audioContextRef.current = audioContext;
-
-      // Create source from the remote audio stream
-      const source = audioContext.createMediaStreamSource(stream);
-
-      // Create processing chain for natural feminine voice
-
-      // 1. Pitch Shift - Subtle increase for more natural feminine tone
-      // Note: Web Audio API doesn't have native pitch shifting,
-      // so we use a combination of filters to enhance feminine characteristics
-
-      // 2. High-frequency boost (8-12kHz) - Enhances clarity and feminine voice characteristics
-      const highShelf = audioContext.createBiquadFilter();
-      highShelf.type = 'highshelf';
-      highShelf.frequency.value = 8000; // 8kHz
-      highShelf.gain.value = 3; // +3dB boost for clarity
-
-      // 3. Presence boost (2-4kHz) - Enhances vocal presence and naturalness
-      const presencePeak = audioContext.createBiquadFilter();
-      presencePeak.type = 'peaking';
-      presencePeak.frequency.value = 3000; // 3kHz
-      presencePeak.Q.value = 1.5; // Moderate Q for natural sound
-      presencePeak.gain.value = 2; // +2dB boost
-
-      // 4. Low-cut filter (80Hz) - Removes rumble and improves clarity
-      const lowCut = audioContext.createBiquadFilter();
-      lowCut.type = 'highpass';
-      lowCut.frequency.value = 80; // 80Hz cutoff
-      lowCut.Q.value = 0.7; // Gentle slope
-
-      // 5. Compression - Smooth out volume variations for more natural speech
-      const compressor = audioContext.createDynamicsCompressor();
-      compressor.threshold.value = -24; // dB
-      compressor.knee.value = 30; // Soft knee for natural compression
-      compressor.ratio.value = 4; // 4:1 ratio
-      compressor.attack.value = 0.003; // 3ms attack
-      compressor.release.value = 0.25; // 250ms release
-
-      // 6. Final gain control
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = 1.0; // Unity gain
-
-      // Connect the processing chain
-      source
-        .connect(lowCut)
-        .connect(presencePeak)
-        .connect(highShelf)
-        .connect(compressor)
-        .connect(gainNode)
-        .connect(audioContext.destination);
-
-      console.log('✅ Web Audio API processing configured:');
-      console.log('   • Sample rate: 24kHz (OpenAI optimized)');
-      console.log('   • High-frequency boost: +3dB @ 8kHz');
-      console.log('   • Presence boost: +2dB @ 3kHz');
-      console.log('   • Low-cut filter: 80Hz');
-      console.log('   • Dynamic compression: 4:1 ratio');
-
-      // Also connect to audio element for playback
-      const destination = audioContext.createMediaStreamDestination();
-      gainNode.connect(destination);
-      audioElement.srcObject = destination.stream;
-
-      return audioContext;
-    } catch (error) {
-      console.error('❌ Error setting up audio processing:', error);
-      console.log('Falling back to direct audio playback');
-      // Fallback: Use unprocessed audio
-      return null;
     }
   };
 
@@ -229,70 +148,48 @@ function VoiceCallContent() {
         pcRef.current = pc;
         console.log('✅ RTCPeerConnection created');
 
-        // Step 3: Set up audio element for mobile earpiece routing
-        console.log('3. Setting up audio playback for mobile earpiece...');
+        // Step 3: Set up simple audio element for playback
+        console.log('3. Setting up audio playback...');
         const audioElement = document.createElement('audio');
         audioElement.autoplay = true;
-
-        // CRITICAL: Configure for earpiece on mobile
         audioElement.setAttribute('playsinline', 'true'); // iOS compatibility
-        audioElement.style.display = 'none'; // Hide the element
+        audioElement.style.display = 'none';
+
+        // Configure for mobile earpiece
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          console.log('Mobile detected - configuring for earpiece');
+          audioElement.volume = 1.0;
+
+          // Request wake lock (helps maintain earpiece routing)
+          if ('wakeLock' in navigator) {
+            try {
+              // @ts-ignore - wakeLock may not be in types
+              const wakeLock = await navigator.wakeLock.request('screen');
+              console.log('✅ Wake lock acquired');
+            } catch (e) {
+              console.log('Wake lock not available');
+            }
+          }
+        }
 
         audioElementRef.current = audioElement;
-        document.body.appendChild(audioElement); // Required for iOS
+        document.body.appendChild(audioElement);
+        console.log('✅ Audio element created');
 
-        // Helper function to configure audio output
-        const configureAudioOutput = async () => {
-          try {
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-            console.log('Device type:', isMobile ? 'Mobile' : 'Desktop');
-
-            if (isMobile) {
-              console.log('Configuring audio for mobile earpiece...');
-
-              // Set volume to max (earpiece needs higher volume)
-              audioElement.volume = 1.0;
-
-              // Request wake lock (helps maintain earpiece routing)
-              if ('wakeLock' in navigator) {
-                try {
-                  // @ts-ignore - wakeLock may not be in types
-                  const wakeLock = await navigator.wakeLock.request('screen');
-                  console.log('✅ Wake lock acquired (helps maintain earpiece routing)');
-                } catch (e) {
-                  console.log('Wake lock not available:', e);
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error configuring audio output:', error);
-          }
-        };
-
-        pc.ontrack = async (e) => {
+        pc.ontrack = (e) => {
           console.log('✅ Received audio track from OpenAI');
-          console.log('   Streams:', e.streams.length);
           console.log('   Track kind:', e.track.kind);
+          console.log('   Track settings:', e.track.getSettings());
 
-          // Apply Web Audio API processing for enhanced feminine voice quality
-          const audioContext = applyAudioProcessing(e.streams[0], audioElement);
-
-          // If audio processing failed, fallback to direct playback
-          if (!audioContext) {
-            audioElement.srcObject = e.streams[0];
+          // Simple: Just set the stream on the audio element
+          // WebRTC handles all audio processing automatically
+          if (audioElementRef.current) {
+            audioElementRef.current.srcObject = e.streams[0];
+            console.log('✅ Audio stream connected to audio element');
           }
 
-          // Configure output after track is received
-          await configureAudioOutput();
-
-          // On iOS, need to explicitly play after user interaction
-          try {
-            await audioElement.play();
-            console.log('✅ Audio playing through earpiece with enhanced processing');
-          } catch (error) {
-            console.error('Audio play error:', error);
-          }
+          setCallStatus('connected');
         };
 
         pc.oniceconnectionstatechange = () => {
@@ -326,49 +223,13 @@ function VoiceCallContent() {
         });
 
         console.log('✅ Microphone access granted');
-        console.log('   Audio tracks:', stream.getAudioTracks().length);
 
         const audioTrack = stream.getAudioTracks()[0];
-        const trackSettings = audioTrack.getSettings();
-        console.log('   Track settings:', trackSettings);
-        console.log('   Sample rate:', trackSettings.sampleRate);
-        console.log('   Channel count:', trackSettings.channelCount);
-
-        // Monitor audio levels to detect when user starts speaking
-        console.log('🎤 Setting up speech detection...');
-        const micAudioContext = new AudioContext({ sampleRate: 24000 });
-        const source = micAudioContext.createMediaStreamSource(stream);
-        const analyser = micAudioContext.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-        // Check audio levels periodically to detect speech
-        const checkAudioLevel = () => {
-          analyser.getByteFrequencyData(dataArray);
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-
-          // If audio detected above threshold (user is speaking)
-          if (average > 10 && !userHasSpoken) {
-            console.log('🎤 User speech detected (level:', average, '), canceling auto-greeting');
-            setUserHasSpoken(true);
-
-            // Cancel the greeting timer
-            if (greetingTimerRef.current) {
-              clearTimeout(greetingTimerRef.current);
-              greetingTimerRef.current = null;
-              console.log('✅ Auto-greeting canceled due to user speech');
-            }
-          }
-        };
-
-        // Check audio levels every 100ms
-        audioLevelIntervalRef.current = setInterval(checkAudioLevel, 100);
-        console.log('✅ Speech detection active');
+        console.log('   Microphone settings:', audioTrack.getSettings());
 
         pc.addTrack(audioTrack, stream);
         console.log('✅ Audio track added to peer connection');
+        console.log('   Speech detection will be handled via OpenAI data channel events');
 
         // Step 5: Set up data channel for events
         console.log('5. Creating data channel...');
@@ -383,22 +244,28 @@ function VoiceCallContent() {
           const event = JSON.parse(e.data);
           console.log('📨 OpenAI event:', event.type);
 
-          // Detect when user input is received
-          if (event.type === 'conversation.item.created' && event.item?.role === 'user') {
-            console.log('✅ User input detected via event');
-            setUserHasSpoken(true);
-
-            // Cancel greeting timer
-            if (greetingTimerRef.current) {
-              clearTimeout(greetingTimerRef.current);
-              greetingTimerRef.current = null;
-              console.log('✅ Auto-greeting canceled due to user input event');
+          // Detect when user starts speaking
+          if (event.type === 'input_audio_buffer.speech_started') {
+            console.log('🎤 User started speaking');
+            if (!userHasSpoken) {
+              setUserHasSpoken(true);
+              if (greetingTimerRef.current) {
+                clearTimeout(greetingTimerRef.current);
+                greetingTimerRef.current = null;
+                console.log('✅ Auto-greeting canceled - user spoke');
+              }
             }
+          }
+
+          // Detect when user input is created
+          if (event.type === 'conversation.item.created' && event.item?.role === 'user') {
+            console.log('✅ User input detected');
+            setUserHasSpoken(true);
           }
 
           if (event.type === 'error') {
             console.error('❌ OpenAI error:', event);
-            alert('Error during call: ' + event.error?.message);
+            alert('Error: ' + event.error?.message);
           } else if (event.type === 'response.done') {
             console.log('✅ AI response complete');
           } else if (event.type === 'conversation.item.created') {
@@ -526,28 +393,21 @@ function VoiceCallContent() {
     initializeVoiceCall();
 
     return () => {
-      // Cleanup
+      // Cleanup timers
       console.log('Cleaning up voice call...');
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
       if (greetingTimerRef.current) {
         clearTimeout(greetingTimerRef.current);
-        console.log('Greeting timer cleared');
       }
-      if (audioLevelIntervalRef.current) {
-        clearInterval(audioLevelIntervalRef.current);
-        console.log('Audio level monitoring stopped');
-      }
+
+      // Cleanup WebRTC
       if (pcRef.current) {
         pcRef.current.close();
       }
-      // Properly cleanup audio context
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        console.log('Audio context closed');
-      }
-      // Properly cleanup audio element
+
+      // Cleanup audio element
       if (audioElementRef.current) {
         audioElementRef.current.pause();
         audioElementRef.current.srcObject = null;
@@ -561,6 +421,7 @@ function VoiceCallContent() {
     console.log('Duration:', duration, 'seconds');
     console.log('Tokens used:', tokensUsed);
 
+    // Close WebRTC connections
     if (pcRef.current) {
       pcRef.current.close();
       console.log('Peer connection closed');
@@ -571,21 +432,13 @@ function VoiceCallContent() {
       console.log('Data channel closed');
     }
 
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      console.log('Audio context closed');
-    }
-
+    // Clear timers
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
 
     if (greetingTimerRef.current) {
       clearTimeout(greetingTimerRef.current);
-    }
-
-    if (audioLevelIntervalRef.current) {
-      clearInterval(audioLevelIntervalRef.current);
     }
 
     try {
