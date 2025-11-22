@@ -139,7 +139,7 @@ function VoiceCallContent() {
       if (isCleaningUpRef.current || callStatus === 'ended') {
         console.log('⚠️ Back button pressed during/after cleanup - preventing');
         e.preventDefault();
-        window.location.href = '/conversations';
+        window.location.href = '/chat-landing';
       }
     };
 
@@ -508,9 +508,9 @@ function VoiceCallContent() {
         // Set cleanup flag before navigating
         isCleaningUpRef.current = true;
 
-        // Hard navigate back to conversations page
-        console.log('Error recovery: navigating to conversations');
-        window.location.href = '/conversations';
+        // Hard navigate back to chat landing page
+        console.log('Error recovery: navigating to chat landing');
+        window.location.href = '/chat-landing';
       }
     };
 
@@ -582,19 +582,19 @@ function VoiceCallContent() {
       await new Promise(resolve => setTimeout(resolve, 300));
 
       // 5. HARD NAVIGATION - Force full page reload
-      console.log('Step 3: Hard navigation to conversations page...');
-      console.log('   → Navigating to /conversations');
+      console.log('Step 3: Hard navigation to chat landing page...');
+      console.log('   → Navigating to /chat-landing');
 
       // Use window.location.href for hard navigation
       // This removes the call page from history and prevents back button issues
-      window.location.href = '/conversations';
+      window.location.href = '/chat-landing';
 
     } catch (error) {
       console.error('❌ Error in endCall:', error);
 
       // Fallback: Hard navigate anyway
       console.log('Fallback navigation...');
-      window.location.href = '/conversations';
+      window.location.href = '/chat-landing';
     }
   };
 
@@ -670,7 +670,7 @@ function VoiceCallContent() {
               fontSize: '14px',
               fontFamily: 'Poppins, sans-serif'
             }}>
-              Returning to conversations
+              Returning to chat
             </p>
           </div>
         </div>
