@@ -133,6 +133,23 @@ function VoiceCallContent() {
     }
   }, [callStatus]);
 
+  // Prevent back button from returning to call page after cleanup
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (isCleaningUpRef.current || callStatus === 'ended') {
+        console.log('⚠️ Back button pressed during/after cleanup - preventing');
+        e.preventDefault();
+        window.location.href = '/conversations';
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [callStatus]);
+
   useEffect(() => {
     // Prevent multiple initializations
     if (hasInitializedRef.current || isCleaningUpRef.current) {
@@ -490,7 +507,10 @@ function VoiceCallContent() {
 
         // Set cleanup flag before navigating
         isCleaningUpRef.current = true;
-        router.push(`/chat?characterId=${characterId}`);
+
+        // Hard navigate back to conversations page
+        console.log('Error recovery: navigating to conversations');
+        window.location.href = '/conversations';
       }
     };
 
@@ -536,7 +556,6 @@ function VoiceCallContent() {
               },
               body: JSON.stringify({
                 sessionId: sessionIdRef.current,
-                characterId: characterId,
                 durationSeconds: duration
               })
             }
@@ -545,6 +564,8 @@ function VoiceCallContent() {
           if (response.ok) {
             const result = await response.json();
             console.log('✅ Call ended on backend:', result);
+            console.log('   Duration:', duration, 'seconds');
+            console.log('   Tokens used:', result.tokensUsed || 0);
           } else {
             console.error('⚠️ Backend end-call failed:', response.status);
           }
@@ -557,17 +578,23 @@ function VoiceCallContent() {
       // 3. Set final status
       setCallStatus('ended');
 
-      // 4. Wait a moment for state to settle
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 4. Short delay for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      // 5. Navigate back to chat
-      console.log('Step 3: Navigating to chat page...');
-      router.push(`/chat?characterId=${characterId}`);
+      // 5. HARD NAVIGATION - Force full page reload
+      console.log('Step 3: Hard navigation to conversations page...');
+      console.log('   → Navigating to /conversations');
+
+      // Use window.location.href for hard navigation
+      // This removes the call page from history and prevents back button issues
+      window.location.href = '/conversations';
 
     } catch (error) {
       console.error('❌ Error in endCall:', error);
-      // Navigate anyway
-      router.push(`/chat?characterId=${characterId}`);
+
+      // Fallback: Hard navigate anyway
+      console.log('Fallback navigation...');
+      window.location.href = '/conversations';
     }
   };
 
@@ -603,6 +630,52 @@ function VoiceCallContent() {
       padding: '32px',
       position: 'relative'
     }}>
+      {/* Loading Overlay During Call End */}
+      {(callStatus === 'ending' || callStatus === 'ended') && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: '#1F2937',
+            borderRadius: '12px',
+            padding: '32px',
+            textAlign: 'center',
+            maxWidth: '300px'
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              border: '3px solid #374151',
+              borderTopColor: 'white',
+              borderRadius: '50%',
+              margin: '0 auto 16px',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <p style={{
+              color: 'white',
+              fontSize: '18px',
+              fontFamily: 'Poppins, sans-serif',
+              marginBottom: '8px'
+            }}>
+              Ending call...
+            </p>
+            <p style={{
+              color: '#9CA3AF',
+              fontSize: '14px',
+              fontFamily: 'Poppins, sans-serif'
+            }}>
+              Returning to conversations
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Earpiece Hint for Mobile */}
       {showEarpieceHint && (
         <div style={{
@@ -775,6 +848,18 @@ function VoiceCallContent() {
           </p>
         )}
       </div>
+
+      {/* CSS Animation for Spinner */}
+      <style jsx>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }
