@@ -144,18 +144,36 @@ function VoiceCallContent() {
           })
         });
 
+        console.log('Response status:', startCallResponse.status);
+        console.log('Response ok:', startCallResponse.ok);
+
         if (!startCallResponse.ok) {
+          console.error('❌ Start call failed:', startCallResponse.status, startCallResponse.statusText);
           const errorData = await startCallResponse.json().catch(() => ({ error: 'Unknown error' }));
-          console.error('Failed to start call:', startCallResponse.status, errorData);
-          alert(`Failed to start call: ${errorData.error || 'Please try again.'}`);
+          console.error('Error details:', errorData);
+          alert(`Failed to start call: ${errorData.error || errorData.message || 'Please try again.'}`);
           router.push(`/chat?characterId=${characterId}`);
           return;
         }
 
+        console.log('Parsing JSON response...');
         const startCallData = await startCallResponse.json();
-        console.log('Start call response:', startCallData);
+        console.log('Start call data:', startCallData);
+        console.log('Response keys:', Object.keys(startCallData));
 
         const sessionToken = startCallData.sessionToken;
+        console.log('sessionToken value:', sessionToken);
+        console.log('sessionToken type:', typeof sessionToken);
+        console.log('sessionToken length:', sessionToken?.length);
+
+        if (!sessionToken) {
+          console.error('❌ No sessionToken in response');
+          console.error('Full response was:', startCallData);
+          alert('Failed to get session token from server');
+          router.push(`/chat?characterId=${characterId}`);
+          return;
+        }
+
         console.log('✅ Got sessionToken:', sessionToken);
 
         console.log('Step 3: Requesting microphone permission...');
@@ -197,9 +215,15 @@ function VoiceCallContent() {
   const connectWebSocket = (sessionToken: string) => {
     if (!characterId) return;
 
+    console.log('=== CONNECTING TO WEBSOCKET ===');
+    console.log('sessionToken parameter:', sessionToken);
+    console.log('sessionToken type:', typeof sessionToken);
+    console.log('characterId:', characterId);
+
     const wsUrl = `wss://pixelcrushbackend-production.up.railway.app/voice-call?sessionToken=${sessionToken}&characterId=${characterId}`;
 
-    console.log('Connecting to WebSocket:', wsUrl);
+    console.log('WebSocket URL:', wsUrl);
+    console.log('Creating WebSocket connection...');
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
