@@ -1,575 +1,267 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { characterAPI, userAPI } from '@/lib/api';
-import type { Character } from '@/lib/types';
+import { useEffect, useState, useRef } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import UpgradeModal from '@/components/UpgradeModal';
-import Image from 'next/image';
 
 function VoiceCallContent() {
   const router = useRouter();
   const params = useParams();
   const characterId = params.characterId as string;
 
-  const [character, setCharacter] = useState<Character | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [character, setCharacter] = useState<any>(null);
   const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
   const [duration, setDuration] = useState(0);
   const [tokensUsed, setTokensUsed] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [hasPermission, setHasPermission] = useState(false);
-  const [isAISpeaking, setIsAISpeaking] = useState(false);
-  const [isUserSpeaking, setIsUserSpeaking] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [userTokens, setUserTokens] = useState(0);
-  const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioStreamRef = useRef<MediaStream | null>(null);
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioQueueRef = useRef<AudioBuffer[]>([]);
-  const isPlayingRef = useRef(false);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const dcRef = useRef<RTCDataChannel | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionIdRef = useRef<number | null>(null);
 
-  // Load user profile and character, check tokens
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    const initializeVoiceCall = async () => {
+      console.log('=== INITIALIZING WEBRTC VOICE CALL ===');
 
-        if (!characterId) {
-          setError('No character selected');
-          return;
-        }
-
-        // Check user tokens
-        console.log('=== VOICE CALL TOKEN CHECK ===');
-        const userData = await userAPI.getProfile();
-        console.log('📨 Raw user data:', JSON.stringify(userData, null, 2));
-
-        console.log('Voice call token check:', {
-          tokens_remaining: userData.tokens_remaining,
-          required: 5,
-          hasEnough: userData.tokens_remaining >= 5,
-          subscription_tier: userData.subscription_tier
-        });
-
-        setUserTokens(userData.tokens_remaining);
-        setSubscriptionTier(userData.subscription_tier);
-
-        // Need at least 5 tokens for 1 minute of call
-        if (userData.tokens_remaining < 5) {
-          if (userData.subscription_tier === 'free') {
-            setError('You need tokens to make voice calls. Subscribe to get 100 tokens/month!');
-            alert('You need tokens to make voice calls. Subscribe to get 100 tokens/month!');
-            setTimeout(() => {
-              router.push('/subscribe');
-            }, 2000);
-          } else {
-            setError('Insufficient tokens. Purchase more tokens to continue.');
-            alert('Insufficient tokens. Purchase more tokens to continue.');
-            setTimeout(() => {
-              router.push('/tokens');
-            }, 2000);
-          }
-          return;
-        }
-
-        // Load character data
-        const characterData = await characterAPI.getById(characterId);
-        setCharacter(characterData);
-      } catch (err) {
-        console.error('Failed to load data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load character');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [characterId, router]);
-
-  // Request microphone permission and start call
-  useEffect(() => {
-    if (!character || userTokens < 5) return;
-
-    const startCall = async () => {
       try {
         const token = localStorage.getItem('token');
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
 
-        console.log('=== STARTING VOICE CALL ===');
-        console.log('Step 1: Checking user tokens...');
-
-        // Step 1: Verify user has enough tokens
-        const userResponse = await fetch(`${apiUrl}/api/users/profile`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!userResponse.ok) {
-          throw new Error('Failed to fetch user profile');
-        }
-
-        const userData = await userResponse.json();
-        console.log('User tokens:', userData.tokens_remaining);
-
-        if (userData.tokens_remaining < 5) {
-          if (userData.subscription_tier === 'free') {
-            alert('You need tokens to make voice calls. Subscribe to get 100 tokens/month!');
-            router.push('/subscribe');
-          } else {
-            alert('Insufficient tokens. Purchase more tokens to continue.');
-            router.push('/tokens');
+        // Step 1: Get ephemeral token from backend
+        console.log('1. Requesting ephemeral token from backend...');
+        const tokenResponse = await fetch(
+          `${apiUrl}/api/voice/start-call`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ characterId })
           }
-          return;
-        }
+        );
 
-        console.log('✅ User has enough tokens');
-        console.log('Step 2: Calling /api/voice/start-call to get sessionToken...');
+        console.log('Response status:', tokenResponse.status);
 
-        // Step 2: Call start-call endpoint to get sessionToken
-        const startCallResponse = await fetch(`${apiUrl}/api/voice/start-call`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            characterId: characterId
-          })
-        });
-
-        console.log('Response status:', startCallResponse.status);
-        console.log('Response ok:', startCallResponse.ok);
-
-        if (!startCallResponse.ok) {
-          console.error('❌ Start call failed:', startCallResponse.status, startCallResponse.statusText);
-          const errorData = await startCallResponse.json().catch(() => ({ error: 'Unknown error' }));
-          console.error('Error details:', errorData);
-          alert(`Failed to start call: ${errorData.error || errorData.message || 'Please try again.'}`);
+        if (!tokenResponse.ok) {
+          const error = await tokenResponse.json().catch(() => ({ message: 'Failed to start call' }));
+          console.error('❌ Failed to get ephemeral token:', error);
+          alert(error.message || 'Failed to start call');
           router.push(`/chat?characterId=${characterId}`);
           return;
         }
 
-        console.log('Parsing JSON response...');
-        const responseJson = await startCallResponse.json();
-        console.log('Full response:', responseJson);
-        console.log('Response has success:', responseJson.success);
-        console.log('Response has data:', !!responseJson.data);
-        console.log('Response.data:', responseJson.data);
+        const responseJson = await tokenResponse.json();
+        console.log('Response:', responseJson);
 
-        // Backend wraps response in { success, data }
-        // Access through .data wrapper
-        const sessionToken = responseJson.data?.sessionToken;
-        const sessionId = responseJson.data?.sessionId;
+        const ephemeralToken = responseJson.data?.ephemeralToken;
+        sessionIdRef.current = responseJson.data?.sessionId;
         const characterName = responseJson.data?.characterName;
 
-        console.log('sessionToken:', sessionToken);
-        console.log('sessionId:', sessionId);
-        console.log('characterName:', characterName);
-        console.log('sessionToken type:', typeof sessionToken);
-        console.log('sessionToken length:', sessionToken?.length);
-
-        if (!sessionToken) {
-          console.error('❌ No sessionToken in response.data');
-          console.error('Full response was:', responseJson);
-          console.error('response.data was:', responseJson.data);
-          alert('Failed to get session token from server');
+        if (!ephemeralToken) {
+          console.error('❌ No ephemeral token in response');
+          alert('Failed to get authentication token');
           router.push(`/chat?characterId=${characterId}`);
           return;
         }
 
-        console.log('✅ Got sessionToken:', sessionToken);
+        console.log('✅ Got ephemeral token');
+        console.log('   Session ID:', sessionIdRef.current);
+        console.log('   Character:', characterName);
 
-        console.log('Step 3: Requesting microphone permission...');
+        // Step 2: Create WebRTC peer connection
+        console.log('2. Creating RTCPeerConnection...');
+        const pc = new RTCPeerConnection();
+        pcRef.current = pc;
+        console.log('✅ RTCPeerConnection created');
 
-        // Step 3: Request microphone permission
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioStreamRef.current = stream;
-        setHasPermission(true);
-        console.log('✅ Microphone access granted');
+        // Step 3: Set up audio element for playback
+        console.log('3. Setting up audio playback...');
+        const audioElement = document.createElement('audio');
+        audioElement.autoplay = true;
+        audioElementRef.current = audioElement;
+        document.body.appendChild(audioElement); // Add to DOM for autoplay to work
 
-        console.log('Step 4: Connecting to WebSocket with sessionToken...');
+        pc.ontrack = (e) => {
+          console.log('✅ Received audio track from OpenAI');
+          console.log('   Streams:', e.streams.length);
+          console.log('   Track kind:', e.track.kind);
+          audioElement.srcObject = e.streams[0];
+        };
 
-        // Step 4: Connect to WebSocket with sessionToken (NOT JWT token)
-        connectWebSocket(sessionToken, sessionId);
+        pc.oniceconnectionstatechange = () => {
+          console.log('ICE connection state:', pc.iceConnectionState);
+        };
 
-        // Start call timer
-        startTimer();
-      } catch (err) {
-        console.error('❌ Failed to start call:', err);
-        if (err instanceof Error && err.message.includes('microphone')) {
-          alert('Microphone access denied. Please enable microphone permissions.');
-        } else {
-          alert('Failed to start voice call. Please try again.');
-        }
-        setTimeout(() => {
-          router.push(`/chat?characterId=${characterId}`);
-        }, 2000);
-      }
-    };
-
-    startCall();
-
-    // Cleanup on unmount
-    return () => {
-      endCallCleanup();
-    };
-  }, [character, userTokens, characterId, router]);
-
-  const connectWebSocket = (sessionToken: string, sessionId?: number) => {
-    if (!characterId) return;
-
-    console.log('=== CONNECTING TO WEBSOCKET ===');
-    console.log('sessionToken parameter:', sessionToken);
-    console.log('sessionId parameter:', sessionId);
-    console.log('sessionToken type:', typeof sessionToken);
-    console.log('characterId:', characterId);
-
-    const wsUrl = `wss://pixelcrushbackend-production.up.railway.app/voice-call?sessionToken=${sessionToken}&characterId=${characterId}`;
-
-    console.log('WebSocket URL:', wsUrl);
-    console.log('Creating WebSocket connection...');
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log('✅ WebSocket connected successfully');
-      if (sessionId) {
-        console.log('✅ Voice session ID:', sessionId);
-      }
-      setCallStatus('connected');
-      startMicrophone();
-    };
-
-    ws.onmessage = async (event) => {
-      console.log('=== WEBSOCKET MESSAGE ===');
-      console.log('Raw message:', event.data);
-
-      try {
-        const message = JSON.parse(event.data);
-        console.log('Parsed message:', message);
-        console.log('Message type:', message.type);
-
-        if (message.type === 'error') {
-          console.error('❌ WebSocket error:', message.message);
-          alert(`Error: ${message.message}`);
-
-          // Check if it's a token-related error
-          if (message.message.includes('token') || message.message.includes('insufficient')) {
-            console.error('Token-related error detected, ending call');
+        pc.onconnectionstatechange = () => {
+          console.log('Connection state:', pc.connectionState);
+          if (pc.connectionState === 'connected') {
+            console.log('✅ WebRTC connection fully established');
+            setCallStatus('connected');
+          } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+            console.error('❌ WebRTC connection failed');
+            alert('Connection lost');
             endCall();
           }
-          return;
-        }
+        };
 
-        if (message.type === 'tokens_depleted') {
-          console.error('❌ Tokens depleted during call');
-          alert('Your tokens have been depleted. Call ending.');
-          endCall();
-          return;
-        }
-
-        if (message.type === 'audio') {
-          // Received audio from AI
-          console.log('📥 Audio message received from AI');
-          const audioData = message.data || message.audio;
-          console.log('Audio data available:', !!audioData);
-          if (audioData) {
-            console.log('Audio data length:', audioData.length);
-            console.log('Audio data preview:', audioData.substring(0, 50) + '...');
+        // Step 4: Get microphone permission and add track
+        console.log('4. Requesting microphone access...');
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 24000
           }
-          setIsAISpeaking(true);
-          await playAudio(audioData);
-          setTimeout(() => setIsAISpeaking(false), 200);
-        } else if (message.type === 'transcript') {
-          console.log('📝 AI transcript:', message.text);
-        } else if (message.type === 'session_started') {
-          console.log('✅ Voice session started:', message);
-        } else if (message.type === 'session_ended') {
-          console.log('🛑 Voice session ended:', message);
-        } else {
-          console.log('ℹ️ Unknown message type:', message.type);
-          console.log('Full message:', message);
+        });
+
+        console.log('✅ Microphone access granted');
+        console.log('   Audio tracks:', stream.getAudioTracks().length);
+
+        const audioTrack = stream.getAudioTracks()[0];
+        console.log('   Track settings:', audioTrack.getSettings());
+
+        pc.addTrack(audioTrack, stream);
+        console.log('✅ Audio track added to peer connection');
+
+        // Step 5: Set up data channel for events
+        console.log('5. Creating data channel...');
+        const dc = pc.createDataChannel('oai-events');
+        dcRef.current = dc;
+
+        dc.addEventListener('open', () => {
+          console.log('✅ Data channel opened');
+        });
+
+        dc.addEventListener('message', (e) => {
+          const event = JSON.parse(e.data);
+          console.log('📨 OpenAI event:', event.type);
+
+          if (event.type === 'error') {
+            console.error('❌ OpenAI error:', event);
+            alert('Error during call: ' + event.error?.message);
+          } else if (event.type === 'response.done') {
+            console.log('✅ Response completed');
+          } else if (event.type === 'conversation.item.created') {
+            console.log('💬 Conversation item created');
+          }
+        });
+
+        dc.addEventListener('close', () => {
+          console.log('Data channel closed');
+        });
+
+        dc.addEventListener('error', (e) => {
+          console.error('❌ Data channel error:', e);
+        });
+
+        // Step 6: Create offer and send to OpenAI
+        console.log('6. Creating SDP offer...');
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        console.log('✅ Local description set');
+
+        console.log('7. Sending offer to OpenAI Realtime API...');
+        const sdpResponse = await fetch('https://api.openai.com/v1/realtime', {
+          method: 'POST',
+          body: offer.sdp,
+          headers: {
+            'Authorization': `Bearer ${ephemeralToken}`,
+            'Content-Type': 'application/sdp'
+          }
+        });
+
+        console.log('OpenAI response status:', sdpResponse.status);
+
+        if (!sdpResponse.ok) {
+          const errorText = await sdpResponse.text();
+          console.error('❌ OpenAI API error:', errorText);
+          throw new Error('Failed to connect to OpenAI: ' + errorText);
         }
-      } catch (err) {
-        console.error('Failed to parse WebSocket message:', err);
-        console.error('Raw data was:', event.data);
-      }
-    };
 
-    ws.onerror = (error) => {
-      console.error('=== WEBSOCKET ERROR ===');
-      console.error('Error object:', error);
-      console.error('Error type:', error.type);
-      setError('Connection error. Please try again.');
-      alert('WebSocket connection error');
-    };
+        const answerSdp = await sdpResponse.text();
+        console.log('✅ Received SDP answer from OpenAI');
+        console.log('   Answer length:', answerSdp.length);
 
-    ws.onclose = (event) => {
-      console.log('=== WEBSOCKET CLOSED ===');
-      console.log('Close code:', event.code);
-      console.log('Close reason:', event.reason);
-      console.log('Was clean:', event.wasClean);
+        // Step 7: Set remote description
+        const answer: RTCSessionDescriptionInit = {
+          type: 'answer',
+          sdp: answerSdp
+        };
+        await pc.setRemoteDescription(answer);
+        console.log('✅ Remote description set');
 
-      if (!event.wasClean) {
-        console.error('⚠️ WebSocket connection closed unexpectedly');
-        alert('Connection lost unexpectedly');
-      }
+        console.log('✅ WebRTC connection established');
 
-      stopMicrophone();
-    };
-  };
-
-  const startMicrophone = async () => {
-    console.log('=== STARTING MICROPHONE ===');
-
-    if (!audioStreamRef.current || !wsRef.current) {
-      console.error('❌ Cannot start microphone - missing stream or WebSocket');
-      console.log('audioStreamRef.current:', !!audioStreamRef.current);
-      console.log('wsRef.current:', !!wsRef.current);
-      return;
-    }
-
-    try {
-      console.log('✅ Audio stream available');
-      console.log('Audio tracks:', audioStreamRef.current.getAudioTracks().length);
-
-      const audioTrack = audioStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        console.log('Track settings:', audioTrack.getSettings());
-        console.log('Track enabled:', audioTrack.enabled);
-        console.log('Track muted:', audioTrack.muted);
-      }
-
-      const mediaRecorder = new MediaRecorder(audioStreamRef.current, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-
-      console.log('✅ MediaRecorder created');
-      console.log('MIME type:', mediaRecorder.mimeType);
-      console.log('State:', mediaRecorder.state);
-
-      mediaRecorderRef.current = mediaRecorder;
-
-      let chunkCount = 0;
-
-      mediaRecorder.ondataavailable = async (event) => {
-        chunkCount++;
-        console.log(`📦 Audio chunk ${chunkCount}: ${event.data.size} bytes`);
-
-        if (event.data.size > 0 && wsRef.current?.readyState === WebSocket.OPEN && !isMuted) {
-          // Convert blob to base64 and send to backend
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64Audio = (reader.result as string).split(',')[1];
-            console.log(`📤 Sending audio chunk ${chunkCount}: ${base64Audio.substring(0, 50)}...`);
-            console.log(`Data length: ${base64Audio.length} characters`);
-
-            wsRef.current?.send(JSON.stringify({
-              type: 'audio',
-              data: base64Audio
-            }));
-            setIsUserSpeaking(true);
-            setTimeout(() => setIsUserSpeaking(false), 150);
-          };
-          reader.readAsDataURL(event.data);
-        } else {
-          console.warn('⚠️ Skipping audio chunk:', {
-            dataSize: event.data.size,
-            wsReady: wsRef.current?.readyState === WebSocket.OPEN,
-            muted: isMuted
+        // Start timer
+        timerRef.current = setInterval(() => {
+          setDuration(prev => {
+            const newDuration = prev + 1;
+            setTokensUsed(Math.ceil(newDuration / 60) * 5);
+            return newDuration;
           });
-        }
-      };
+        }, 1000);
 
-      mediaRecorder.onerror = (error) => {
-        console.error('❌ MediaRecorder error:', error);
-      };
+        // Fetch character data
+        console.log('8. Fetching character data...');
+        const charResponse = await fetch(
+          `${apiUrl}/api/characters/${characterId}`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        const charData = await charResponse.json();
+        setCharacter(charData);
+        console.log('✅ Character data loaded:', charData.name || charData.character_name);
 
-      mediaRecorder.onstart = () => {
-        console.log('🎤 Recording started');
-      };
-
-      mediaRecorder.onstop = () => {
-        console.log('🛑 Recording stopped');
-      };
-
-      // Capture audio in chunks every 100ms
-      mediaRecorder.start(100);
-      console.log('✅ MediaRecorder started with 100ms chunks');
-    } catch (err) {
-      console.error('❌ Failed to start microphone:', err);
-      console.error('Error details:', err instanceof Error ? err.message : err);
-    }
-  };
-
-  const stopMicrophone = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      console.log('Microphone stopped');
-    }
-  };
-
-  const playAudio = async (base64Audio: string) => {
-    console.log('=== PLAYING AUDIO ===');
-    console.log('Received audio data length:', base64Audio.length);
-    console.log('Audio preview:', base64Audio.substring(0, 50) + '...');
-
-    try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContext();
-        console.log('✅ AudioContext created');
-        console.log('Sample rate:', audioContextRef.current.sampleRate);
-        console.log('State:', audioContextRef.current.state);
+      } catch (error) {
+        console.error('❌ Error initializing voice call:', error);
+        console.error('Error details:', error instanceof Error ? error.message : error);
+        alert('Failed to connect. Please try again.');
+        router.push(`/chat?characterId=${characterId}`);
       }
-
-      const audioContext = audioContextRef.current;
-
-      // Decode base64 to audio buffer
-      console.log('Decoding base64 audio...');
-      const audioData = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0));
-      console.log('Audio data size:', audioData.length, 'bytes');
-
-      const audioBuffer = await audioContext.decodeAudioData(audioData.buffer);
-      console.log('✅ Audio decoded successfully');
-      console.log('Duration:', audioBuffer.duration, 'seconds');
-      console.log('Channels:', audioBuffer.numberOfChannels);
-      console.log('Sample rate:', audioBuffer.sampleRate);
-
-      // Add to queue
-      audioQueueRef.current.push(audioBuffer);
-      console.log('Audio added to queue, queue length:', audioQueueRef.current.length);
-
-      // Play if not already playing
-      if (!isPlayingRef.current) {
-        console.log('Starting playback...');
-        playNextInQueue();
-      } else {
-        console.log('Already playing, audio will play when queue is ready');
-      }
-    } catch (err) {
-      console.error('❌ Failed to play audio:', err);
-      console.error('Error details:', err instanceof Error ? err.message : err);
-      console.error('Audio data preview:', base64Audio.substring(0, 100));
-    }
-  };
-
-  const playNextInQueue = async () => {
-    if (audioQueueRef.current.length === 0) {
-      console.log('Audio queue empty, playback stopped');
-      isPlayingRef.current = false;
-      return;
-    }
-
-    console.log('🔊 Playing next audio from queue');
-    console.log('Queue length:', audioQueueRef.current.length);
-
-    isPlayingRef.current = true;
-    const audioBuffer = audioQueueRef.current.shift()!;
-    const audioContext = audioContextRef.current!;
-
-    console.log('Creating audio source...');
-    console.log('Buffer duration:', audioBuffer.duration);
-
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(audioContext.destination);
-
-    source.onended = () => {
-      console.log('✅ Audio playback finished');
-      console.log('Remaining in queue:', audioQueueRef.current.length);
-      playNextInQueue();
     };
 
-    source.start();
-    console.log('Audio playback started');
-  };
+    initializeVoiceCall();
 
-  const startTimer = () => {
-    timerIntervalRef.current = setInterval(() => {
-      setDuration(prev => {
-        const newDuration = prev + 1;
-        // Calculate tokens: 5 tokens per 60 seconds
-        const tokensConsumed = Math.ceil(newDuration / 60) * 5;
-        setTokensUsed(tokensConsumed);
-
-        // Every 60 seconds, check if user still has tokens
-        if (newDuration % 60 === 0) {
-          checkTokenBalance(tokensConsumed);
-        }
-
-        return newDuration;
-      });
-    }, 1000);
-  };
-
-  const checkTokenBalance = async (tokensConsumed: number) => {
-    try {
-      const userData = await userAPI.getProfile();
-      const tokensRemaining = userData.tokens_remaining - tokensConsumed;
-
-      console.log('Token check:', { tokensRemaining, tokensConsumed, totalTokens: userData.tokens_remaining });
-
-      // If tokens running out (less than 5 remaining), end call
-      if (tokensRemaining < 5) {
-        alert('Tokens depleted. Call ending.');
-        endCall();
+    return () => {
+      // Cleanup
+      console.log('Cleaning up voice call...');
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
       }
-    } catch (error) {
-      console.error('Failed to check token balance:', error);
-    }
-  };
-
-  const endCallCleanup = () => {
-    // Stop timer
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-
-    // Close WebSocket
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    // Stop microphone
-    stopMicrophone();
-
-    // Stop audio stream
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-      audioStreamRef.current = null;
-    }
-
-    // Close audio context
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-  };
+      if (pcRef.current) {
+        pcRef.current.close();
+      }
+      if (audioElementRef.current) {
+        audioElementRef.current.remove();
+      }
+    };
+  }, [characterId, router]);
 
   const endCall = async () => {
-    console.log('=== ENDING VOICE CALL ===');
-    console.log('Call duration:', duration, 'seconds');
+    console.log('=== ENDING CALL ===');
+    console.log('Duration:', duration, 'seconds');
     console.log('Tokens used:', tokensUsed);
 
-    setCallStatus('ended');
-    endCallCleanup();
+    if (pcRef.current) {
+      pcRef.current.close();
+      console.log('Peer connection closed');
+    }
 
-    // Call backend to finalize token deduction
+    if (dcRef.current) {
+      dcRef.current.close();
+      console.log('Data channel closed');
+    }
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
     try {
       const token = localStorage.getItem('token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
 
-      console.log('Calling POST /api/voice/end-call...');
-
+      console.log('Calling /api/voice/end-call...');
       const response = await fetch(`${apiUrl}/api/voice/end-call`, {
         method: 'POST',
         headers: {
@@ -577,176 +269,165 @@ function VoiceCallContent() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          characterId,
+          sessionId: sessionIdRef.current,
+          characterId: characterId,
           durationSeconds: duration
         })
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Call ended successfully:', data);
+        console.log('✅ Call ended successfully');
       } else {
         console.error('❌ Failed to end call:', response.status);
       }
-    } catch (err) {
-      console.error('❌ Failed to finalize call:', err);
+    } catch (error) {
+      console.error('❌ Failed to end call:', error);
     }
 
-    // Navigate back to chat after a delay
-    setTimeout(() => {
-      router.push(`/chat?characterId=${characterId}`);
-    }, 2000);
+    router.push(`/chat?characterId=${characterId}`);
   };
 
-  const toggleMute = () => {
-    setIsMuted(prev => !prev);
-  };
-
-  const formatDuration = (seconds: number): string => {
+  const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (loading) {
+  if (!character) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
-        <div className="w-12 h-12 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
-        <p className="mt-4 text-lg">Loading...</p>
-      </div>
-    );
-  }
-
-  if (error || !character) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white px-6">
-        <div className="text-5xl mb-4">⚠️</div>
-        <p className="text-xl font-semibold mb-2 text-center">
-          {error || 'Character not found'}
-        </p>
-        <button
-          onClick={() => router.push('/chat-landing')}
-          className="mt-4 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg font-semibold hover:shadow-lg transition-all"
-        >
-          Back to Chats
-        </button>
-        {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
+      <div style={{
+        minHeight: '100vh',
+        background: '#131313',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'Poppins, sans-serif'
+      }}>
+        <p style={{ color: 'white', fontSize: '18px' }}>Connecting...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white max-w-md mx-auto relative">
-      {/* Status Bar */}
-      <div className="py-5 px-6 text-center">
-        <p className={`text-sm font-semibold uppercase tracking-wider ${
-          callStatus === 'connected' ? 'text-green-500' :
-          callStatus === 'connecting' ? 'text-yellow-500' :
-          'text-red-500'
-        }`}>
-          {callStatus === 'connecting' && 'Connecting...'}
-          {callStatus === 'connected' && 'Connected'}
-          {callStatus === 'ended' && 'Call Ended'}
-        </p>
-      </div>
-
-      {/* Character Display */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-        {/* Character Image with Pulse Animation */}
-        <div
-          className={`w-[200px] h-[200px] rounded-full overflow-hidden mb-6 transition-all duration-300 ${
-            isAISpeaking
-              ? 'ring-4 ring-green-500 shadow-[0_0_30px_rgba(16,185,129,0.6)] animate-pulse'
-              : 'ring-4 ring-white/20 shadow-[0_0_20px_rgba(0,0,0,0.5)]'
-          }`}
-        >
+    <div style={{
+      minHeight: '100vh',
+      background: '#131313',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '32px'
+    }}>
+      {/* Character Section */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          position: 'relative',
+          width: '192px',
+          height: '192px',
+          marginBottom: '24px'
+        }}>
           <img
-            src={character.avatar_url || '/icons/default-avatar.webp'}
-            alt={character.name}
-            className="w-full h-full object-cover"
+            src={character.avatar_url || character.image_url}
+            alt={character.name || character.character_name}
+            style={{
+              borderRadius: '50%',
+              objectFit: 'cover',
+              width: '100%',
+              height: '100%',
+              border: '3px solid #FF3B9A'
+            }}
           />
         </div>
 
-        {/* Character Name */}
-        <h2 className="text-2xl font-semibold mb-2">
-          {character.name}
-        </h2>
+        <h1 style={{
+          fontSize: '36px',
+          fontWeight: 'bold',
+          color: 'white',
+          marginBottom: '8px',
+          fontFamily: 'Poppins, sans-serif'
+        }}>
+          {character.name || character.character_name}
+        </h1>
 
-        {/* Character Info */}
-        <p className="text-sm text-white/60 mb-8">
-          {character.age && character.occupation
-            ? `${character.age} • ${character.occupation}`
-            : character.tagline || 'AI Character'}
-        </p>
-
-        {/* Call Duration */}
-        <div className={`text-5xl font-light font-mono mb-4 transition-colors ${
-          isUserSpeaking ? 'text-green-500' : 'text-white'
-        }`}>
-          {formatDuration(duration)}
-        </div>
-
-        {/* Token Cost */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full border border-white/10">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="#FFD700" strokeWidth="2"/>
-            <text x="12" y="16" textAnchor="middle" fill="#FFD700" fontSize="12" fontWeight="bold">T</text>
-          </svg>
-          <span className="text-sm text-white/80">
-            Cost: {tokensUsed} tokens (5 tokens/min)
-          </span>
-        </div>
-
-        {/* Permission Status */}
-        {!hasPermission && callStatus === 'connecting' && (
-          <p className="mt-4 text-xs text-red-400">
-            Waiting for microphone permission...
+        <div style={{
+          textAlign: 'center',
+          marginTop: '32px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          <p style={{
+            fontSize: '18px',
+            color: callStatus === 'connecting' ? '#FCD34D' :
+                   callStatus === 'connected' ? '#10B981' :
+                   '#EF4444',
+            fontFamily: 'Poppins, sans-serif'
+          }}>
+            {callStatus === 'connecting' && '🔄 Connecting...'}
+            {callStatus === 'connected' && '✅ Connected'}
+            {callStatus === 'ended' && '❌ Call Ended'}
           </p>
-        )}
+
+          <p style={{
+            fontSize: '48px',
+            fontFamily: 'monospace',
+            color: 'white',
+            fontWeight: 'bold'
+          }}>
+            {formatDuration(duration)}
+          </p>
+
+          <p style={{
+            color: '#9CA3AF',
+            fontSize: '16px',
+            fontFamily: 'Poppins, sans-serif'
+          }}>
+            Cost: {tokensUsed} tokens (5 tokens/min)
+          </p>
+        </div>
       </div>
 
-      {/* Controls */}
-      <div className="px-6 pb-8 flex flex-col items-center gap-4">
-        {/* Mute Button */}
-        <button
-          onClick={toggleMute}
-          disabled={callStatus !== 'connected'}
-          className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
-            isMuted
-              ? 'bg-red-500 hover:bg-red-600'
-              : 'bg-white/10 hover:bg-white/20'
-          } ${callStatus !== 'connected' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-        >
-          {isMuted ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 3L21 21M9 9V12C9 13.6569 10.3431 15 12 15C12.2034 15 12.4018 14.9818 12.5938 14.9472M15 9.34V6C15 4.34315 13.6569 3 12 3C10.8224 3 9.80325 3.67852 9.3122 4.66824" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M5 11C5 11 5 16 12 16M19 11C19 11.6254 18.9255 12.2311 18.7868 12.8077" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M12 16V20M12 20H9M12 20H15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 3C10.3431 3 9 4.34315 9 6V12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12V6C15 4.34315 13.6569 3 12 3Z" stroke="white" strokeWidth="2"/>
-              <path d="M5 11C5 11 5 16 12 16C19 16 19 11 19 11" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M12 16V20M12 20H9M12 20H15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </button>
-
-        {/* End Call Button */}
+      {/* End Call Button */}
+      <div style={{ paddingBottom: '32px' }}>
         <button
           onClick={endCall}
-          disabled={callStatus === 'ended'}
-          className={`w-[80%] py-4 bg-gradient-to-r from-red-500 to-red-600 rounded-xl font-semibold text-base transition-all shadow-lg shadow-red-500/30 ${
-            callStatus !== 'ended'
-              ? 'cursor-pointer hover:shadow-xl hover:shadow-red-500/40 hover:scale-105'
-              : 'opacity-50 cursor-not-allowed'
-          }`}
+          style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            background: '#EF4444',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.5)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#DC2626';
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#EF4444';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
         >
-          {callStatus === 'ended' ? 'Returning to Chat...' : 'End Call'}
+          <svg
+            style={{ width: '32px', height: '32px', color: 'white' }}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+          </svg>
         </button>
       </div>
-
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
     </div>
   );
 }
