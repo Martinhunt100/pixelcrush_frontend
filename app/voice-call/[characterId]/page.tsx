@@ -277,14 +277,25 @@ function VoiceCallContent() {
 
         if (message.type === 'audio') {
           // Received audio from AI
-          console.log('Processing audio message');
+          console.log('📥 Audio message received from AI');
+          const audioData = message.data || message.audio;
+          console.log('Audio data available:', !!audioData);
+          if (audioData) {
+            console.log('Audio data length:', audioData.length);
+            console.log('Audio data preview:', audioData.substring(0, 50) + '...');
+          }
           setIsAISpeaking(true);
-          await playAudio(message.data || message.audio);
+          await playAudio(audioData);
           setTimeout(() => setIsAISpeaking(false), 200);
         } else if (message.type === 'transcript') {
-          console.log('AI transcript:', message.text);
+          console.log('📝 AI transcript:', message.text);
+        } else if (message.type === 'session_started') {
+          console.log('✅ Voice session started:', message);
+        } else if (message.type === 'session_ended') {
+          console.log('🛑 Voice session ended:', message);
         } else {
-          console.log('Unknown message type:', message.type);
+          console.log('ℹ️ Unknown message type:', message.type);
+          console.log('Full message:', message);
         }
       } catch (err) {
         console.error('Failed to parse WebSocket message:', err);
@@ -316,21 +327,50 @@ function VoiceCallContent() {
   };
 
   const startMicrophone = async () => {
-    if (!audioStreamRef.current || !wsRef.current) return;
+    console.log('=== STARTING MICROPHONE ===');
+
+    if (!audioStreamRef.current || !wsRef.current) {
+      console.error('❌ Cannot start microphone - missing stream or WebSocket');
+      console.log('audioStreamRef.current:', !!audioStreamRef.current);
+      console.log('wsRef.current:', !!wsRef.current);
+      return;
+    }
 
     try {
+      console.log('✅ Audio stream available');
+      console.log('Audio tracks:', audioStreamRef.current.getAudioTracks().length);
+
+      const audioTrack = audioStreamRef.current.getAudioTracks()[0];
+      if (audioTrack) {
+        console.log('Track settings:', audioTrack.getSettings());
+        console.log('Track enabled:', audioTrack.enabled);
+        console.log('Track muted:', audioTrack.muted);
+      }
+
       const mediaRecorder = new MediaRecorder(audioStreamRef.current, {
         mimeType: 'audio/webm;codecs=opus'
       });
 
+      console.log('✅ MediaRecorder created');
+      console.log('MIME type:', mediaRecorder.mimeType);
+      console.log('State:', mediaRecorder.state);
+
       mediaRecorderRef.current = mediaRecorder;
 
+      let chunkCount = 0;
+
       mediaRecorder.ondataavailable = async (event) => {
+        chunkCount++;
+        console.log(`📦 Audio chunk ${chunkCount}: ${event.data.size} bytes`);
+
         if (event.data.size > 0 && wsRef.current?.readyState === WebSocket.OPEN && !isMuted) {
           // Convert blob to base64 and send to backend
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64Audio = (reader.result as string).split(',')[1];
+            console.log(`📤 Sending audio chunk ${chunkCount}: ${base64Audio.substring(0, 50)}...`);
+            console.log(`Data length: ${base64Audio.length} characters`);
+
             wsRef.current?.send(JSON.stringify({
               type: 'audio',
               data: base64Audio
@@ -339,14 +379,33 @@ function VoiceCallContent() {
             setTimeout(() => setIsUserSpeaking(false), 150);
           };
           reader.readAsDataURL(event.data);
+        } else {
+          console.warn('⚠️ Skipping audio chunk:', {
+            dataSize: event.data.size,
+            wsReady: wsRef.current?.readyState === WebSocket.OPEN,
+            muted: isMuted
+          });
         }
+      };
+
+      mediaRecorder.onerror = (error) => {
+        console.error('❌ MediaRecorder error:', error);
+      };
+
+      mediaRecorder.onstart = () => {
+        console.log('🎤 Recording started');
+      };
+
+      mediaRecorder.onstop = () => {
+        console.log('🛑 Recording stopped');
       };
 
       // Capture audio in chunks every 100ms
       mediaRecorder.start(100);
-      console.log('Microphone started');
+      console.log('✅ MediaRecorder started with 100ms chunks');
     } catch (err) {
-      console.error('Failed to start microphone:', err);
+      console.error('❌ Failed to start microphone:', err);
+      console.error('Error details:', err instanceof Error ? err.message : err);
     }
   };
 
@@ -358,48 +417,78 @@ function VoiceCallContent() {
   };
 
   const playAudio = async (base64Audio: string) => {
+    console.log('=== PLAYING AUDIO ===');
+    console.log('Received audio data length:', base64Audio.length);
+    console.log('Audio preview:', base64Audio.substring(0, 50) + '...');
+
     try {
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext();
+        console.log('✅ AudioContext created');
+        console.log('Sample rate:', audioContextRef.current.sampleRate);
+        console.log('State:', audioContextRef.current.state);
       }
 
       const audioContext = audioContextRef.current;
 
       // Decode base64 to audio buffer
+      console.log('Decoding base64 audio...');
       const audioData = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0));
+      console.log('Audio data size:', audioData.length, 'bytes');
+
       const audioBuffer = await audioContext.decodeAudioData(audioData.buffer);
+      console.log('✅ Audio decoded successfully');
+      console.log('Duration:', audioBuffer.duration, 'seconds');
+      console.log('Channels:', audioBuffer.numberOfChannels);
+      console.log('Sample rate:', audioBuffer.sampleRate);
 
       // Add to queue
       audioQueueRef.current.push(audioBuffer);
+      console.log('Audio added to queue, queue length:', audioQueueRef.current.length);
 
       // Play if not already playing
       if (!isPlayingRef.current) {
+        console.log('Starting playback...');
         playNextInQueue();
+      } else {
+        console.log('Already playing, audio will play when queue is ready');
       }
     } catch (err) {
-      console.error('Failed to play audio:', err);
+      console.error('❌ Failed to play audio:', err);
+      console.error('Error details:', err instanceof Error ? err.message : err);
+      console.error('Audio data preview:', base64Audio.substring(0, 100));
     }
   };
 
   const playNextInQueue = async () => {
     if (audioQueueRef.current.length === 0) {
+      console.log('Audio queue empty, playback stopped');
       isPlayingRef.current = false;
       return;
     }
 
+    console.log('🔊 Playing next audio from queue');
+    console.log('Queue length:', audioQueueRef.current.length);
+
     isPlayingRef.current = true;
     const audioBuffer = audioQueueRef.current.shift()!;
     const audioContext = audioContextRef.current!;
+
+    console.log('Creating audio source...');
+    console.log('Buffer duration:', audioBuffer.duration);
 
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(audioContext.destination);
 
     source.onended = () => {
+      console.log('✅ Audio playback finished');
+      console.log('Remaining in queue:', audioQueueRef.current.length);
       playNextInQueue();
     };
 
     source.start();
+    console.log('Audio playback started');
   };
 
   const startTimer = () => {
