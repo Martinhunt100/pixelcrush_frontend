@@ -141,10 +141,20 @@ function VoiceCallContent() {
 
       try {
         const token = localStorage.getItem('token');
+
+        if (!token) {
+          console.error('❌ No authentication token found');
+          alert('Please log in first');
+          router.push('/login');
+          return;
+        }
+
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
 
         // Step 1: Get ephemeral token from backend
         console.log('1. Requesting ephemeral token from backend...');
+        console.log('   API URL:', apiUrl);
+        console.log('   Character ID:', characterId);
         const tokenResponse = await fetch(
           `${apiUrl}/api/voice/start-call`,
           {
@@ -160,30 +170,58 @@ function VoiceCallContent() {
         console.log('Response status:', tokenResponse.status);
 
         if (!tokenResponse.ok) {
-          const error = await tokenResponse.json().catch(() => ({ message: 'Failed to start call' }));
-          console.error('❌ Failed to get ephemeral token:', error);
-          alert(error.message || 'Failed to start call');
+          const errorText = await tokenResponse.text();
+          console.error('❌ Start call failed:', tokenResponse.status, errorText);
+
+          // Try to parse as JSON for better error message
+          try {
+            const errorJson = JSON.parse(errorText);
+            alert(errorJson.message || 'Failed to start call');
+          } catch {
+            alert('Failed to start call');
+          }
+
           router.push(`/chat?characterId=${characterId}`);
           return;
         }
 
+        // Parse JSON response
         const responseJson = await tokenResponse.json();
-        console.log('Response:', responseJson);
+        console.log('Full response:', responseJson);
+        console.log('Response.success:', responseJson.success);
+        console.log('Response.data:', responseJson.data);
 
-        const ephemeralToken = responseJson.data?.ephemeralToken;
-        sessionIdRef.current = responseJson.data?.sessionId;
-        const characterName = responseJson.data?.characterName;
+        // CRITICAL: Validate response structure (backend returns { success, data })
+        if (!responseJson.success || !responseJson.data) {
+          console.error('❌ Invalid response structure:', responseJson);
+          console.error('Expected: { success: true, data: { ephemeralToken, sessionId, ... } }');
+          alert('Invalid response from server');
+          router.push(`/chat?characterId=${characterId}`);
+          return;
+        }
 
+        const { data } = responseJson;
+        console.log('Data object keys:', Object.keys(data));
+
+        // Access ephemeralToken from data object
+        const ephemeralToken = data.ephemeralToken;
+        sessionIdRef.current = data.sessionId;
+        const characterName = data.characterName;
+        const greetingDelay = data.greetingDelay || 6000;
+
+        console.log('✅ Ephemeral token extracted:', ephemeralToken ? ephemeralToken.substring(0, 20) + '...' : 'MISSING');
+        console.log('✅ Session ID:', sessionIdRef.current);
+        console.log('✅ Character name:', characterName);
+        console.log('✅ Greeting delay:', greetingDelay, 'ms');
+
+        // Validate token exists
         if (!ephemeralToken) {
-          console.error('❌ No ephemeral token in response');
+          console.error('❌ No ephemeralToken in response.data');
+          console.error('Available fields in data:', Object.keys(data));
           alert('Failed to get authentication token');
           router.push(`/chat?characterId=${characterId}`);
           return;
         }
-
-        console.log('✅ Got ephemeral token');
-        console.log('   Session ID:', sessionIdRef.current);
-        console.log('   Character:', characterName);
 
         // Step 2: Create WebRTC peer connection
         console.log('2. Creating RTCPeerConnection...');
@@ -381,8 +419,11 @@ function VoiceCallContent() {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         console.log('✅ Local description set');
+        console.log('   Offer SDP length:', offer.sdp?.length);
 
         console.log('7. Sending offer to OpenAI Realtime API...');
+        console.log('   Using ephemeral token (first 20 chars):', ephemeralToken.substring(0, 20) + '...');
+        console.log('   Endpoint: https://api.openai.com/v1/realtime');
         const sdpResponse = await fetch('https://api.openai.com/v1/realtime', {
           method: 'POST',
           body: offer.sdp,
@@ -396,7 +437,9 @@ function VoiceCallContent() {
 
         if (!sdpResponse.ok) {
           const errorText = await sdpResponse.text();
-          console.error('❌ OpenAI API error:', errorText);
+          console.error('❌ OpenAI connection failed');
+          console.error('   Status:', sdpResponse.status);
+          console.error('   Error:', errorText);
           throw new Error('Failed to connect to OpenAI: ' + errorText);
         }
 
@@ -467,8 +510,15 @@ function VoiceCallContent() {
 
       } catch (error) {
         console.error('❌ Error initializing voice call:', error);
-        console.error('Error details:', error instanceof Error ? error.message : error);
-        alert('Failed to connect. Please try again.');
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          type: error?.constructor?.name
+        });
+
+        // Show user-friendly error message
+        const errorMessage = error instanceof Error ? error.message : 'Failed to connect';
+        alert('Failed to connect: ' + errorMessage);
         router.push(`/chat?characterId=${characterId}`);
       }
     };
