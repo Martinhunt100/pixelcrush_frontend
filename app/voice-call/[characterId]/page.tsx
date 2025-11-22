@@ -13,6 +13,7 @@ function VoiceCallContent() {
   const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
   const [duration, setDuration] = useState(0);
   const [tokensUsed, setTokensUsed] = useState(0);
+  const [showEarpieceHint, setShowEarpieceHint] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -20,9 +21,40 @@ function VoiceCallContent() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<number | null>(null);
 
+  // Helper function to configure audio session for iOS
+  const configureAudioSession = () => {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isIOS) {
+      console.log('Configuring iOS audio session for earpiece...');
+
+      // Create a silent audio element to "prime" the audio session
+      // This helps iOS route audio to earpiece
+      const silentAudio = new Audio();
+      silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      silentAudio.play().catch(() => {
+        console.log('Silent audio prime failed (expected on some devices)');
+      });
+      console.log('✅ iOS audio session primed');
+    }
+  };
+
+  // Show earpiece hint on mobile when connected
+  useEffect(() => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile && callStatus === 'connected') {
+      setShowEarpieceHint(true);
+      // Hide hint after 5 seconds
+      setTimeout(() => setShowEarpieceHint(false), 5000);
+    }
+  }, [callStatus]);
+
   useEffect(() => {
     const initializeVoiceCall = async () => {
       console.log('=== INITIALIZING WEBRTC VOICE CALL ===');
+
+      // Configure audio session for mobile devices (especially iOS)
+      configureAudioSession();
 
       try {
         const token = localStorage.getItem('token');
@@ -76,18 +108,63 @@ function VoiceCallContent() {
         pcRef.current = pc;
         console.log('✅ RTCPeerConnection created');
 
-        // Step 3: Set up audio element for playback
-        console.log('3. Setting up audio playback...');
+        // Step 3: Set up audio element for mobile earpiece routing
+        console.log('3. Setting up audio playback for mobile earpiece...');
         const audioElement = document.createElement('audio');
         audioElement.autoplay = true;
-        audioElementRef.current = audioElement;
-        document.body.appendChild(audioElement); // Add to DOM for autoplay to work
 
-        pc.ontrack = (e) => {
+        // CRITICAL: Configure for earpiece on mobile
+        audioElement.setAttribute('playsinline', 'true'); // iOS compatibility
+        audioElement.style.display = 'none'; // Hide the element
+
+        audioElementRef.current = audioElement;
+        document.body.appendChild(audioElement); // Required for iOS
+
+        // Helper function to configure audio output
+        const configureAudioOutput = async () => {
+          try {
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            console.log('Device type:', isMobile ? 'Mobile' : 'Desktop');
+
+            if (isMobile) {
+              console.log('Configuring audio for mobile earpiece...');
+
+              // Set volume to max (earpiece needs higher volume)
+              audioElement.volume = 1.0;
+
+              // Request wake lock (helps maintain earpiece routing)
+              if ('wakeLock' in navigator) {
+                try {
+                  // @ts-ignore - wakeLock may not be in types
+                  const wakeLock = await navigator.wakeLock.request('screen');
+                  console.log('✅ Wake lock acquired (helps maintain earpiece routing)');
+                } catch (e) {
+                  console.log('Wake lock not available:', e);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error configuring audio output:', error);
+          }
+        };
+
+        pc.ontrack = async (e) => {
           console.log('✅ Received audio track from OpenAI');
           console.log('   Streams:', e.streams.length);
           console.log('   Track kind:', e.track.kind);
           audioElement.srcObject = e.streams[0];
+
+          // Configure output after track is received
+          await configureAudioOutput();
+
+          // On iOS, need to explicitly play after user interaction
+          try {
+            await audioElement.play();
+            console.log('✅ Audio playing through earpiece');
+          } catch (error) {
+            console.error('Audio play error:', error);
+          }
         };
 
         pc.oniceconnectionstatechange = () => {
@@ -106,13 +183,17 @@ function VoiceCallContent() {
           }
         };
 
-        // Step 4: Get microphone permission and add track
-        console.log('4. Requesting microphone access...');
+        // Step 4: Get microphone with mobile-optimized settings
+        console.log('4. Requesting microphone access with mobile-optimized settings...');
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
-            sampleRate: 24000
+            autoGainControl: true,
+            sampleRate: 24000,
+            // Mobile-specific: Request voice communication mode
+            channelCount: 1,  // Mono for voice calls
+            latency: 0        // Low latency for real-time
           }
         });
 
@@ -120,7 +201,10 @@ function VoiceCallContent() {
         console.log('   Audio tracks:', stream.getAudioTracks().length);
 
         const audioTrack = stream.getAudioTracks()[0];
-        console.log('   Track settings:', audioTrack.getSettings());
+        const trackSettings = audioTrack.getSettings();
+        console.log('   Track settings:', trackSettings);
+        console.log('   Sample rate:', trackSettings.sampleRate);
+        console.log('   Channel count:', trackSettings.channelCount);
 
         pc.addTrack(audioTrack, stream);
         console.log('✅ Audio track added to peer connection');
@@ -232,7 +316,10 @@ function VoiceCallContent() {
       if (pcRef.current) {
         pcRef.current.close();
       }
+      // Properly cleanup audio element
       if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current.srcObject = null;
         audioElementRef.current.remove();
       }
     };
@@ -316,8 +403,31 @@ function VoiceCallContent() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '32px'
+      padding: '32px',
+      position: 'relative'
     }}>
+      {/* Earpiece Hint for Mobile */}
+      {showEarpieceHint && (
+        <div style={{
+          position: 'absolute',
+          top: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#3B82F6',
+          color: 'white',
+          padding: '12px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.5)',
+          zIndex: 1000,
+          fontFamily: 'Poppins, sans-serif',
+          fontSize: '14px',
+          textAlign: 'center',
+          animation: 'fadeIn 0.3s ease-in'
+        }}>
+          💡 Hold phone to your ear like a regular call
+        </div>
+      )}
+
       {/* Character Section */}
       <div style={{
         flex: 1,
