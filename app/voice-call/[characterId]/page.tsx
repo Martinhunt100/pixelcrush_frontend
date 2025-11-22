@@ -144,36 +144,69 @@ function VoiceCallContent() {
     };
 
     ws.onmessage = async (event) => {
-      try {
-        const data = JSON.parse(event.data);
+      console.log('=== WEBSOCKET MESSAGE ===');
+      console.log('Raw message:', event.data);
 
-        if (data.type === 'audio') {
-          // Received audio from AI
-          setIsAISpeaking(true);
-          await playAudio(data.data || data.audio);
-          setTimeout(() => setIsAISpeaking(false), 200);
-        } else if (data.type === 'transcript') {
-          console.log('AI transcript:', data.text);
-        } else if (data.type === 'error') {
-          console.error('WebSocket error:', data.message);
-          if (data.message.includes('token') || data.message.includes('insufficient')) {
-            alert('Insufficient tokens. Call will end.');
+      try {
+        const message = JSON.parse(event.data);
+        console.log('Parsed message:', message);
+        console.log('Message type:', message.type);
+
+        if (message.type === 'error') {
+          console.error('❌ WebSocket error:', message.message);
+          alert(`Error: ${message.message}`);
+
+          // Check if it's a token-related error
+          if (message.message.includes('token') || message.message.includes('insufficient')) {
+            console.error('Token-related error detected, ending call');
             endCall();
           }
+          return;
+        }
+
+        if (message.type === 'tokens_depleted') {
+          console.error('❌ Tokens depleted during call');
+          alert('Your tokens have been depleted. Call ending.');
+          endCall();
+          return;
+        }
+
+        if (message.type === 'audio') {
+          // Received audio from AI
+          console.log('Processing audio message');
+          setIsAISpeaking(true);
+          await playAudio(message.data || message.audio);
+          setTimeout(() => setIsAISpeaking(false), 200);
+        } else if (message.type === 'transcript') {
+          console.log('AI transcript:', message.text);
+        } else {
+          console.log('Unknown message type:', message.type);
         }
       } catch (err) {
-        console.error('Failed to process WebSocket message:', err);
+        console.error('Failed to parse WebSocket message:', err);
+        console.error('Raw data was:', event.data);
       }
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('=== WEBSOCKET ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error type:', error.type);
       setError('Connection error. Please try again.');
       alert('WebSocket connection error');
     };
 
-    ws.onclose = () => {
-      console.log('WebSocket closed');
+    ws.onclose = (event) => {
+      console.log('=== WEBSOCKET CLOSED ===');
+      console.log('Close code:', event.code);
+      console.log('Close reason:', event.reason);
+      console.log('Was clean:', event.wasClean);
+
+      if (!event.wasClean) {
+        console.error('⚠️ WebSocket connection closed unexpectedly');
+        alert('Connection lost unexpectedly');
+      }
+
       stopMicrophone();
     };
   };
