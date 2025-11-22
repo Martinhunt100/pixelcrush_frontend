@@ -100,19 +100,86 @@ function VoiceCallContent() {
 
     const startCall = async () => {
       try {
-        // Request microphone permission
+        const token = localStorage.getItem('token');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
+
+        console.log('=== STARTING VOICE CALL ===');
+        console.log('Step 1: Checking user tokens...');
+
+        // Step 1: Verify user has enough tokens
+        const userResponse = await fetch(`${apiUrl}/api/users/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('Failed to fetch user profile');
+        }
+
+        const userData = await userResponse.json();
+        console.log('User tokens:', userData.tokens_remaining);
+
+        if (userData.tokens_remaining < 5) {
+          if (userData.subscription_tier === 'free') {
+            alert('You need tokens to make voice calls. Subscribe to get 100 tokens/month!');
+            router.push('/subscribe');
+          } else {
+            alert('Insufficient tokens. Purchase more tokens to continue.');
+            router.push('/tokens');
+          }
+          return;
+        }
+
+        console.log('✅ User has enough tokens');
+        console.log('Step 2: Calling /api/voice/start-call to get sessionToken...');
+
+        // Step 2: Call start-call endpoint to get sessionToken
+        const startCallResponse = await fetch(`${apiUrl}/api/voice/start-call`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            characterId: characterId
+          })
+        });
+
+        if (!startCallResponse.ok) {
+          const errorData = await startCallResponse.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('Failed to start call:', startCallResponse.status, errorData);
+          alert(`Failed to start call: ${errorData.error || 'Please try again.'}`);
+          router.push(`/chat?characterId=${characterId}`);
+          return;
+        }
+
+        const startCallData = await startCallResponse.json();
+        console.log('Start call response:', startCallData);
+
+        const sessionToken = startCallData.sessionToken;
+        console.log('✅ Got sessionToken:', sessionToken);
+
+        console.log('Step 3: Requesting microphone permission...');
+
+        // Step 3: Request microphone permission
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioStreamRef.current = stream;
         setHasPermission(true);
+        console.log('✅ Microphone access granted');
 
-        // Initialize WebSocket connection
-        connectWebSocket();
+        console.log('Step 4: Connecting to WebSocket with sessionToken...');
+
+        // Step 4: Connect to WebSocket with sessionToken (NOT JWT token)
+        connectWebSocket(sessionToken);
 
         // Start call timer
         startTimer();
       } catch (err) {
-        console.error('Failed to access microphone:', err);
-        alert('Microphone access denied. Please enable microphone permissions.');
+        console.error('❌ Failed to start call:', err);
+        if (err instanceof Error && err.message.includes('microphone')) {
+          alert('Microphone access denied. Please enable microphone permissions.');
+        } else {
+          alert('Failed to start voice call. Please try again.');
+        }
         setTimeout(() => {
           router.push(`/chat?characterId=${characterId}`);
         }, 2000);
@@ -127,11 +194,10 @@ function VoiceCallContent() {
     };
   }, [character, userTokens, characterId, router]);
 
-  const connectWebSocket = () => {
+  const connectWebSocket = (sessionToken: string) => {
     if (!characterId) return;
 
-    const token = localStorage.getItem('token');
-    const wsUrl = `wss://pixelcrushbackend-production.up.railway.app/voice-call?token=${token}&characterId=${characterId}`;
+    const wsUrl = `wss://pixelcrushbackend-production.up.railway.app/voice-call?sessionToken=${sessionToken}&characterId=${characterId}`;
 
     console.log('Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);
@@ -363,13 +429,21 @@ function VoiceCallContent() {
   };
 
   const endCall = async () => {
+    console.log('=== ENDING VOICE CALL ===');
+    console.log('Call duration:', duration, 'seconds');
+    console.log('Tokens used:', tokensUsed);
+
     setCallStatus('ended');
     endCallCleanup();
 
     // Call backend to finalize token deduction
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app'}/api/voice/end-call`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
+
+      console.log('Calling POST /api/voice/end-call...');
+
+      const response = await fetch(`${apiUrl}/api/voice/end-call`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -380,8 +454,15 @@ function VoiceCallContent() {
           durationSeconds: duration
         })
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Call ended successfully:', data);
+      } else {
+        console.error('❌ Failed to end call:', response.status);
+      }
     } catch (err) {
-      console.error('Failed to finalize call:', err);
+      console.error('❌ Failed to finalize call:', err);
     }
 
     // Navigate back to chat after a delay
