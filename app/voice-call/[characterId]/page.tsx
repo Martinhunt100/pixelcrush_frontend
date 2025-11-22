@@ -18,6 +18,7 @@ function VoiceCallContent() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<number | null>(null);
 
@@ -36,6 +37,85 @@ function VoiceCallContent() {
         console.log('Silent audio prime failed (expected on some devices)');
       });
       console.log('✅ iOS audio session primed');
+    }
+  };
+
+  // Helper function to apply Web Audio API processing for natural feminine voice
+  const applyAudioProcessing = (stream: MediaStream, audioElement: HTMLAudioElement) => {
+    try {
+      console.log('🎵 Setting up Web Audio API processing...');
+
+      // Create AudioContext optimized for 24kHz (OpenAI Realtime API sample rate)
+      const audioContext = new AudioContext({ sampleRate: 24000 });
+      audioContextRef.current = audioContext;
+
+      // Create source from the remote audio stream
+      const source = audioContext.createMediaStreamSource(stream);
+
+      // Create processing chain for natural feminine voice
+
+      // 1. Pitch Shift - Subtle increase for more natural feminine tone
+      // Note: Web Audio API doesn't have native pitch shifting,
+      // so we use a combination of filters to enhance feminine characteristics
+
+      // 2. High-frequency boost (8-12kHz) - Enhances clarity and feminine voice characteristics
+      const highShelf = audioContext.createBiquadFilter();
+      highShelf.type = 'highshelf';
+      highShelf.frequency.value = 8000; // 8kHz
+      highShelf.gain.value = 3; // +3dB boost for clarity
+
+      // 3. Presence boost (2-4kHz) - Enhances vocal presence and naturalness
+      const presencePeak = audioContext.createBiquadFilter();
+      presencePeak.type = 'peaking';
+      presencePeak.frequency.value = 3000; // 3kHz
+      presencePeak.Q.value = 1.5; // Moderate Q for natural sound
+      presencePeak.gain.value = 2; // +2dB boost
+
+      // 4. Low-cut filter (80Hz) - Removes rumble and improves clarity
+      const lowCut = audioContext.createBiquadFilter();
+      lowCut.type = 'highpass';
+      lowCut.frequency.value = 80; // 80Hz cutoff
+      lowCut.Q.value = 0.7; // Gentle slope
+
+      // 5. Compression - Smooth out volume variations for more natural speech
+      const compressor = audioContext.createDynamicsCompressor();
+      compressor.threshold.value = -24; // dB
+      compressor.knee.value = 30; // Soft knee for natural compression
+      compressor.ratio.value = 4; // 4:1 ratio
+      compressor.attack.value = 0.003; // 3ms attack
+      compressor.release.value = 0.25; // 250ms release
+
+      // 6. Final gain control
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 1.0; // Unity gain
+
+      // Connect the processing chain
+      source
+        .connect(lowCut)
+        .connect(presencePeak)
+        .connect(highShelf)
+        .connect(compressor)
+        .connect(gainNode)
+        .connect(audioContext.destination);
+
+      console.log('✅ Web Audio API processing configured:');
+      console.log('   • Sample rate: 24kHz (OpenAI optimized)');
+      console.log('   • High-frequency boost: +3dB @ 8kHz');
+      console.log('   • Presence boost: +2dB @ 3kHz');
+      console.log('   • Low-cut filter: 80Hz');
+      console.log('   • Dynamic compression: 4:1 ratio');
+
+      // Also connect to audio element for playback
+      const destination = audioContext.createMediaStreamDestination();
+      gainNode.connect(destination);
+      audioElement.srcObject = destination.stream;
+
+      return audioContext;
+    } catch (error) {
+      console.error('❌ Error setting up audio processing:', error);
+      console.log('Falling back to direct audio playback');
+      // Fallback: Use unprocessed audio
+      return null;
     }
   };
 
@@ -153,7 +233,14 @@ function VoiceCallContent() {
           console.log('✅ Received audio track from OpenAI');
           console.log('   Streams:', e.streams.length);
           console.log('   Track kind:', e.track.kind);
-          audioElement.srcObject = e.streams[0];
+
+          // Apply Web Audio API processing for enhanced feminine voice quality
+          const audioContext = applyAudioProcessing(e.streams[0], audioElement);
+
+          // If audio processing failed, fallback to direct playback
+          if (!audioContext) {
+            audioElement.srcObject = e.streams[0];
+          }
 
           // Configure output after track is received
           await configureAudioOutput();
@@ -161,7 +248,7 @@ function VoiceCallContent() {
           // On iOS, need to explicitly play after user interaction
           try {
             await audioElement.play();
-            console.log('✅ Audio playing through earpiece');
+            console.log('✅ Audio playing through earpiece with enhanced processing');
           } catch (error) {
             console.error('Audio play error:', error);
           }
@@ -316,6 +403,11 @@ function VoiceCallContent() {
       if (pcRef.current) {
         pcRef.current.close();
       }
+      // Properly cleanup audio context
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        console.log('Audio context closed');
+      }
       // Properly cleanup audio element
       if (audioElementRef.current) {
         audioElementRef.current.pause();
@@ -338,6 +430,11 @@ function VoiceCallContent() {
     if (dcRef.current) {
       dcRef.current.close();
       console.log('Data channel closed');
+    }
+
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      console.log('Audio context closed');
     }
 
     if (timerRef.current) {
