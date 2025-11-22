@@ -10,7 +10,7 @@ function VoiceCallContent() {
   const characterId = params.characterId as string;
 
   const [character, setCharacter] = useState<any>(null);
-  const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
+  const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ending' | 'ended'>('connecting');
   const [duration, setDuration] = useState(0);
   const [tokensUsed, setTokensUsed] = useState(0);
   const [showEarpieceHint, setShowEarpieceHint] = useState(false);
@@ -22,6 +22,10 @@ function VoiceCallContent() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<number | null>(null);
   const greetingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // CRITICAL: Flags to prevent re-initialization during cleanup
+  const isCleaningUpRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   // Helper function to configure audio session for iOS
   const configureAudioSession = () => {
@@ -41,6 +45,84 @@ function VoiceCallContent() {
     }
   };
 
+  // Cleanup function to fully disconnect and cleanup resources
+  const performCleanup = () => {
+    if (isCleaningUpRef.current) {
+      console.log('⚠️ Cleanup already in progress');
+      return;
+    }
+
+    console.log('🧹 Starting cleanup...');
+    isCleaningUpRef.current = true;
+
+    // 1. Clear timers
+    if (timerRef.current) {
+      console.log('  - Clearing duration timer');
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (greetingTimerRef.current) {
+      console.log('  - Clearing greeting timer');
+      clearTimeout(greetingTimerRef.current);
+      greetingTimerRef.current = null;
+    }
+
+    // 2. Close data channel
+    if (dcRef.current) {
+      console.log('  - Closing data channel, state:', dcRef.current.readyState);
+      try {
+        dcRef.current.close();
+      } catch (error) {
+        console.error('  - Error closing data channel:', error);
+      }
+      dcRef.current = null;
+    }
+
+    // 3. Close peer connection (this closes OpenAI connection)
+    if (pcRef.current) {
+      console.log('  - Closing RTCPeerConnection, state:', pcRef.current.connectionState);
+      try {
+        // Close all tracks
+        pcRef.current.getSenders().forEach(sender => {
+          if (sender.track) {
+            console.log('  - Stopping sender track:', sender.track.kind);
+            sender.track.stop();
+          }
+        });
+
+        pcRef.current.getReceivers().forEach(receiver => {
+          if (receiver.track) {
+            console.log('  - Stopping receiver track:', receiver.track.kind);
+            receiver.track.stop();
+          }
+        });
+
+        // Close the connection
+        pcRef.current.close();
+        console.log('  ✅ RTCPeerConnection closed');
+      } catch (error) {
+        console.error('  - Error closing peer connection:', error);
+      }
+      pcRef.current = null;
+    }
+
+    // 4. Cleanup audio element
+    if (audioElementRef.current) {
+      console.log('  - Cleaning up audio element');
+      try {
+        audioElementRef.current.pause();
+        audioElementRef.current.srcObject = null;
+        audioElementRef.current.remove();
+      } catch (error) {
+        console.error('  - Error cleaning audio element:', error);
+      }
+      audioElementRef.current = null;
+    }
+
+    console.log('✅ Cleanup complete');
+  };
+
   // Show earpiece hint on mobile when connected
   useEffect(() => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -52,8 +134,22 @@ function VoiceCallContent() {
   }, [callStatus]);
 
   useEffect(() => {
+    // Prevent multiple initializations
+    if (hasInitializedRef.current || isCleaningUpRef.current) {
+      console.log('⚠️ Skipping initialization - already initialized or cleaning up');
+      return;
+    }
+
+    hasInitializedRef.current = true;
+
     const initializeVoiceCall = async () => {
       console.log('=== INITIALIZING WEBRTC VOICE CALL ===');
+
+      // Double-check cleanup flag
+      if (isCleaningUpRef.current) {
+        console.log('⚠️ Cleanup in progress, aborting initialization');
+        return;
+      }
 
       // Configure audio session for mobile devices (especially iOS)
       configureAudioSession();
@@ -193,18 +289,23 @@ function VoiceCallContent() {
         };
 
         pc.oniceconnectionstatechange = () => {
-          console.log('ICE connection state:', pc.iceConnectionState);
+          console.log('📊 ICE connection state changed:', pc.iceConnectionState);
         };
 
         pc.onconnectionstatechange = () => {
-          console.log('Connection state:', pc.connectionState);
+          console.log('📊 Connection state changed:', pc.connectionState);
+
           if (pc.connectionState === 'connected') {
             console.log('✅ WebRTC connection fully established');
             setCallStatus('connected');
-          } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-            console.error('❌ WebRTC connection failed');
-            alert('Connection lost');
-            endCall();
+          } else if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+            console.log('⚠️ Connection lost or closed');
+            if (callStatus !== 'ending' && callStatus !== 'ended') {
+              alert('Connection lost');
+              endCall();
+            }
+          } else if (pc.connectionState === 'disconnected') {
+            console.warn('⚠️ Connection disconnected - may be temporary');
           }
         };
 
@@ -386,89 +487,88 @@ function VoiceCallContent() {
         // Show user-friendly error message
         const errorMessage = error instanceof Error ? error.message : 'Failed to connect';
         alert('Failed to connect: ' + errorMessage);
+
+        // Set cleanup flag before navigating
+        isCleaningUpRef.current = true;
         router.push(`/chat?characterId=${characterId}`);
       }
     };
 
     initializeVoiceCall();
 
+    // Cleanup function
     return () => {
-      // Cleanup timers
-      console.log('Cleaning up voice call...');
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (greetingTimerRef.current) {
-        clearTimeout(greetingTimerRef.current);
-      }
-
-      // Cleanup WebRTC
-      if (pcRef.current) {
-        pcRef.current.close();
-      }
-
-      // Cleanup audio element
-      if (audioElementRef.current) {
-        audioElementRef.current.pause();
-        audioElementRef.current.srcObject = null;
-        audioElementRef.current.remove();
-      }
+      console.log('=== CLEANUP TRIGGERED ===');
+      performCleanup();
     };
-  }, [characterId, router]);
+  }, []); // Empty deps - only run once
 
   const endCall = async () => {
-    console.log('=== ENDING CALL ===');
-    console.log('Duration:', duration, 'seconds');
-    console.log('Tokens used:', tokensUsed);
+    console.log('=== END CALL INITIATED ===');
 
-    // Close WebRTC connections
-    if (pcRef.current) {
-      pcRef.current.close();
-      console.log('Peer connection closed');
+    // Prevent multiple end call triggers
+    if (callStatus === 'ending' || callStatus === 'ended') {
+      console.log('⚠️ Call already ending/ended');
+      return;
     }
 
-    if (dcRef.current) {
-      dcRef.current.close();
-      console.log('Data channel closed');
-    }
-
-    // Clear timers
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-
-    if (greetingTimerRef.current) {
-      clearTimeout(greetingTimerRef.current);
-    }
+    setCallStatus('ending');
 
     try {
+      // 1. Perform all cleanup first
+      console.log('Step 1: Performing cleanup...');
+      performCleanup();
+
+      // 2. Call backend to finalize and deduct tokens
+      console.log('Step 2: Calling backend end-call endpoint...');
       const token = localStorage.getItem('token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
 
-      console.log('Calling /api/voice/end-call...');
-      const response = await fetch(`${apiUrl}/api/voice/end-call`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          sessionId: sessionIdRef.current,
-          characterId: characterId,
-          durationSeconds: duration
-        })
-      });
+      if (token && sessionIdRef.current) {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://pixelcrushbackend-production.up.railway.app';
+          const response = await fetch(
+            `${apiUrl}/api/voice/end-call`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                sessionId: sessionIdRef.current,
+                characterId: characterId,
+                durationSeconds: duration
+              })
+            }
+          );
 
-      if (response.ok) {
-        console.log('✅ Call ended successfully');
-      } else {
-        console.error('❌ Failed to end call:', response.status);
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Call ended on backend:', result);
+          } else {
+            console.error('⚠️ Backend end-call failed:', response.status);
+          }
+        } catch (error) {
+          console.error('⚠️ Error calling end-call endpoint:', error);
+          // Continue with navigation even if backend call fails
+        }
       }
-    } catch (error) {
-      console.error('❌ Failed to end call:', error);
-    }
 
-    router.push(`/chat?characterId=${characterId}`);
+      // 3. Set final status
+      setCallStatus('ended');
+
+      // 4. Wait a moment for state to settle
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 5. Navigate back to chat
+      console.log('Step 3: Navigating to chat page...');
+      router.push(`/chat?characterId=${characterId}`);
+
+    } catch (error) {
+      console.error('❌ Error in endCall:', error);
+      // Navigate anyway
+      router.push(`/chat?characterId=${characterId}`);
+    }
   };
 
   const formatDuration = (seconds: number) => {
@@ -594,11 +694,13 @@ function VoiceCallContent() {
             fontSize: '18px',
             color: callStatus === 'connecting' ? '#FCD34D' :
                    callStatus === 'connected' ? '#10B981' :
+                   callStatus === 'ending' ? '#F97316' :
                    '#EF4444',
             fontFamily: 'Poppins, sans-serif'
           }}>
             {callStatus === 'connecting' && '🔄 Connecting...'}
             {callStatus === 'connected' && '✅ Connected'}
+            {callStatus === 'ending' && '⏳ Ending call...'}
             {callStatus === 'ended' && '❌ Call Ended'}
           </p>
 
@@ -622,29 +724,35 @@ function VoiceCallContent() {
       </div>
 
       {/* End Call Button */}
-      <div style={{ paddingBottom: '32px' }}>
+      <div style={{ paddingBottom: '32px', textAlign: 'center' }}>
         <button
           onClick={endCall}
+          disabled={callStatus === 'ending' || callStatus === 'ended'}
           style={{
             width: '80px',
             height: '80px',
             borderRadius: '50%',
-            background: '#EF4444',
+            background: (callStatus === 'ending' || callStatus === 'ended') ? '#6B7280' : '#EF4444',
             border: 'none',
-            cursor: 'pointer',
+            cursor: (callStatus === 'ending' || callStatus === 'ended') ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s ease',
-            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.5)'
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.5)',
+            opacity: (callStatus === 'ending' || callStatus === 'ended') ? 0.5 : 1
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#DC2626';
-            e.currentTarget.style.transform = 'scale(1.05)';
+            if (callStatus !== 'ending' && callStatus !== 'ended') {
+              e.currentTarget.style.background = '#DC2626';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#EF4444';
-            e.currentTarget.style.transform = 'scale(1)';
+            if (callStatus !== 'ending' && callStatus !== 'ended') {
+              e.currentTarget.style.background = '#EF4444';
+              e.currentTarget.style.transform = 'scale(1)';
+            }
           }}
         >
           <svg
@@ -655,6 +763,17 @@ function VoiceCallContent() {
             <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
           </svg>
         </button>
+
+        {(callStatus === 'ending' || callStatus === 'ended') && (
+          <p style={{
+            color: '#9CA3AF',
+            fontSize: '14px',
+            marginTop: '12px',
+            fontFamily: 'Poppins, sans-serif'
+          }}>
+            Disconnecting...
+          </p>
+        )}
       </div>
     </div>
   );
