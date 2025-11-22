@@ -157,18 +157,28 @@ function VoiceCallContent() {
         }
 
         console.log('Parsing JSON response...');
-        const startCallData = await startCallResponse.json();
-        console.log('Start call data:', startCallData);
-        console.log('Response keys:', Object.keys(startCallData));
+        const responseJson = await startCallResponse.json();
+        console.log('Full response:', responseJson);
+        console.log('Response has success:', responseJson.success);
+        console.log('Response has data:', !!responseJson.data);
+        console.log('Response.data:', responseJson.data);
 
-        const sessionToken = startCallData.sessionToken;
-        console.log('sessionToken value:', sessionToken);
+        // Backend wraps response in { success, data }
+        // Access through .data wrapper
+        const sessionToken = responseJson.data?.sessionToken;
+        const sessionId = responseJson.data?.sessionId;
+        const characterName = responseJson.data?.characterName;
+
+        console.log('sessionToken:', sessionToken);
+        console.log('sessionId:', sessionId);
+        console.log('characterName:', characterName);
         console.log('sessionToken type:', typeof sessionToken);
         console.log('sessionToken length:', sessionToken?.length);
 
         if (!sessionToken) {
-          console.error('❌ No sessionToken in response');
-          console.error('Full response was:', startCallData);
+          console.error('❌ No sessionToken in response.data');
+          console.error('Full response was:', responseJson);
+          console.error('response.data was:', responseJson.data);
           alert('Failed to get session token from server');
           router.push(`/chat?characterId=${characterId}`);
           return;
@@ -187,7 +197,7 @@ function VoiceCallContent() {
         console.log('Step 4: Connecting to WebSocket with sessionToken...');
 
         // Step 4: Connect to WebSocket with sessionToken (NOT JWT token)
-        connectWebSocket(sessionToken);
+        connectWebSocket(sessionToken, sessionId);
 
         // Start call timer
         startTimer();
@@ -212,11 +222,12 @@ function VoiceCallContent() {
     };
   }, [character, userTokens, characterId, router]);
 
-  const connectWebSocket = (sessionToken: string) => {
+  const connectWebSocket = (sessionToken: string, sessionId?: number) => {
     if (!characterId) return;
 
     console.log('=== CONNECTING TO WEBSOCKET ===');
     console.log('sessionToken parameter:', sessionToken);
+    console.log('sessionId parameter:', sessionId);
     console.log('sessionToken type:', typeof sessionToken);
     console.log('characterId:', characterId);
 
@@ -228,7 +239,10 @@ function VoiceCallContent() {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
+      console.log('✅ WebSocket connected successfully');
+      if (sessionId) {
+        console.log('✅ Voice session ID:', sessionId);
+      }
       setCallStatus('connected');
       startMicrophone();
     };
