@@ -14,6 +14,7 @@ function VoiceCallContent() {
   const [duration, setDuration] = useState(0);
   const [tokensUsed, setTokensUsed] = useState(0);
   const [showEarpieceHint, setShowEarpieceHint] = useState(false);
+  const [userHasSpoken, setUserHasSpoken] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -21,6 +22,8 @@ function VoiceCallContent() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<number | null>(null);
+  const greetingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioLevelIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Helper function to configure audio session for iOS
   const configureAudioSession = () => {
@@ -293,6 +296,39 @@ function VoiceCallContent() {
         console.log('   Sample rate:', trackSettings.sampleRate);
         console.log('   Channel count:', trackSettings.channelCount);
 
+        // Monitor audio levels to detect when user starts speaking
+        console.log('🎤 Setting up speech detection...');
+        const micAudioContext = new AudioContext({ sampleRate: 24000 });
+        const source = micAudioContext.createMediaStreamSource(stream);
+        const analyser = micAudioContext.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        // Check audio levels periodically to detect speech
+        const checkAudioLevel = () => {
+          analyser.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+
+          // If audio detected above threshold (user is speaking)
+          if (average > 10 && !userHasSpoken) {
+            console.log('🎤 User speech detected (level:', average, '), canceling auto-greeting');
+            setUserHasSpoken(true);
+
+            // Cancel the greeting timer
+            if (greetingTimerRef.current) {
+              clearTimeout(greetingTimerRef.current);
+              greetingTimerRef.current = null;
+              console.log('✅ Auto-greeting canceled due to user speech');
+            }
+          }
+        };
+
+        // Check audio levels every 100ms
+        audioLevelIntervalRef.current = setInterval(checkAudioLevel, 100);
+        console.log('✅ Speech detection active');
+
         pc.addTrack(audioTrack, stream);
         console.log('✅ Audio track added to peer connection');
 
@@ -309,11 +345,24 @@ function VoiceCallContent() {
           const event = JSON.parse(e.data);
           console.log('📨 OpenAI event:', event.type);
 
+          // Detect when user input is received
+          if (event.type === 'conversation.item.created' && event.item?.role === 'user') {
+            console.log('✅ User input detected via event');
+            setUserHasSpoken(true);
+
+            // Cancel greeting timer
+            if (greetingTimerRef.current) {
+              clearTimeout(greetingTimerRef.current);
+              greetingTimerRef.current = null;
+              console.log('✅ Auto-greeting canceled due to user input event');
+            }
+          }
+
           if (event.type === 'error') {
             console.error('❌ OpenAI error:', event);
             alert('Error during call: ' + event.error?.message);
           } else if (event.type === 'response.done') {
-            console.log('✅ Response completed');
+            console.log('✅ AI response complete');
           } else if (event.type === 'conversation.item.created') {
             console.log('💬 Conversation item created');
           }
@@ -364,8 +413,40 @@ function VoiceCallContent() {
         console.log('✅ Remote description set');
 
         console.log('✅ WebRTC connection established');
+        setCallStatus('connected');
 
-        // Start timer
+        // Start 6-second timer for automatic greeting
+        console.log('⏱️ Starting 6-second greeting timer...');
+        greetingTimerRef.current = setTimeout(() => {
+          // Only send greeting trigger if user hasn't spoken
+          if (!userHasSpoken && dcRef.current?.readyState === 'open') {
+            console.log('⏱️ 6 seconds elapsed, no user input - triggering greeting');
+
+            // Send event to trigger minimal greeting
+            dcRef.current.send(JSON.stringify({
+              type: 'conversation.item.create',
+              item: {
+                type: 'message',
+                role: 'system',
+                content: [{
+                  type: 'input_text',
+                  text: 'GREETING_TRIGGER: Start with a brief, natural greeting.'
+                }]
+              }
+            }));
+
+            // Request response
+            dcRef.current.send(JSON.stringify({
+              type: 'response.create'
+            }));
+
+            console.log('✅ Greeting trigger sent to AI');
+          } else if (userHasSpoken) {
+            console.log('✅ User already spoke, skipping automatic greeting');
+          }
+        }, 6000);  // 6 seconds
+
+        // Start call duration timer
         timerRef.current = setInterval(() => {
           setDuration(prev => {
             const newDuration = prev + 1;
@@ -399,6 +480,14 @@ function VoiceCallContent() {
       console.log('Cleaning up voice call...');
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (greetingTimerRef.current) {
+        clearTimeout(greetingTimerRef.current);
+        console.log('Greeting timer cleared');
+      }
+      if (audioLevelIntervalRef.current) {
+        clearInterval(audioLevelIntervalRef.current);
+        console.log('Audio level monitoring stopped');
       }
       if (pcRef.current) {
         pcRef.current.close();
@@ -439,6 +528,14 @@ function VoiceCallContent() {
 
     if (timerRef.current) {
       clearInterval(timerRef.current);
+    }
+
+    if (greetingTimerRef.current) {
+      clearTimeout(greetingTimerRef.current);
+    }
+
+    if (audioLevelIntervalRef.current) {
+      clearInterval(audioLevelIntervalRef.current);
     }
 
     try {
@@ -522,6 +619,27 @@ function VoiceCallContent() {
           animation: 'fadeIn 0.3s ease-in'
         }}>
           💡 Hold phone to your ear like a regular call
+        </div>
+      )}
+
+      {/* Listening Indicator */}
+      {callStatus === 'connected' && !userHasSpoken && (
+        <div style={{
+          position: 'absolute',
+          top: '128px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          textAlign: 'center',
+          zIndex: 999
+        }}>
+          <p style={{
+            color: '#9CA3AF',
+            fontSize: '14px',
+            fontFamily: 'Poppins, sans-serif',
+            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+          }}>
+            🎤 Listening...
+          </p>
         </div>
       )}
 
